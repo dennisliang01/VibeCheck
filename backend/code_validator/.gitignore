@@ -1,0 +1,12 @@
+# Local env with secrets - do not commit
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Logs
+logs/*.jsonl
