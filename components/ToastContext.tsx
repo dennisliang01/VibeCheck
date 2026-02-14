@@ -36,6 +36,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {toast && (
         <div
           role="alert"
+          aria-live="assertive"
           className="fixed left-1/2 top-4 z-50 w-full max-w-md -translate-x-1/2 rounded-lg border px-4 py-3 shadow-lg"
           style={{
             backgroundColor:
@@ -45,7 +46,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             color: toast.type === 'error' ? 'var(--error)' : 'var(--success)',
           }}
         >
-          <p className="text-sm font-medium">{toast.message}</p>
+          <p className="text-sm font-medium">
+            <span className="font-semibold">{toast.type === 'error' ? 'Error: ' : 'Success: '}</span>
+            {toast.message}
+          </p>
         </div>
       )}
     </ToastContext.Provider>

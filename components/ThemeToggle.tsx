@@ -9,7 +9,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="rounded-lg border border-[var(--border)] bg-transparent p-2 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] transition-colors"
+      className="rounded-lg border border-[var(--border)] bg-transparent p-2 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >

@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ToastContext';
 
 const FileSelectionContext = createContext<{
@@ -40,7 +40,7 @@ function HintReveal({ hint }: { hint: string }) {
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
-        className="text-sm text-[var(--accent)] hover:underline"
+        className="text-sm text-[var(--accent)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] rounded"
       >
         {show ? 'Hide hint' : 'Show hint'}
       </button>
@@ -61,6 +61,8 @@ export default function LearnPage() {
   const [grading, setGrading] = useState(false);
   const [lastGrade, setLastGrade] = useState<GradeObj | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const answerErrorRef = useRef<HTMLParagraphElement>(null);
+  const answerInputRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchQuestion = useCallback(async () => {
     setError(null);
@@ -106,6 +108,7 @@ export default function LearnPage() {
       const msg = e instanceof Error ? e.message : 'Grade failed';
       setError(msg);
       showToast(msg, 'error');
+      requestAnimationFrame(() => answerErrorRef.current?.focus() ?? answerInputRef.current?.focus());
     } finally {
       setGrading(false);
     }
@@ -154,7 +157,7 @@ export default function LearnPage() {
                 <button
                   type="button"
                   onClick={() => setTreeOpen((o) => !o)}
-                  className="rounded p-1 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)]"
+                  className="rounded p-1 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                   title={treeOpen ? 'Hide file tree' : 'Show file tree'}
                   aria-label={treeOpen ? 'Hide file tree' : 'Show file tree'}
                 >
@@ -167,7 +170,7 @@ export default function LearnPage() {
               <button
                 type="button"
                 onClick={() => setCodePanelOpen(false)}
-                className="rounded p-1 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)]"
+                className="rounded p-1 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                 title="Collapse code viewer"
                 aria-label="Collapse code viewer"
               >
@@ -186,7 +189,7 @@ export default function LearnPage() {
                     <button
                       type="button"
                       onClick={() => setTreeOpen(true)}
-                      className="shrink-0 w-6 border-r border-[var(--border)] border-opacity-40 bg-[var(--bg)] text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)]"
+                      className="shrink-0 w-6 border-r border-[var(--border)] border-opacity-40 bg-[var(--bg)] text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                       title="Show file tree"
                       aria-label="Show file tree"
                     >
@@ -198,6 +201,8 @@ export default function LearnPage() {
               </FileSelectionProvider>
             </div>
           </section>
+          {/* Resizer is mouse-only; keyboard users can collapse/expand via toolbar. See docs/accessibility.md */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             role="separator"
             aria-orientation="vertical"
@@ -210,7 +215,7 @@ export default function LearnPage() {
         <button
           type="button"
           onClick={() => setCodePanelOpen(true)}
-          className="shrink-0 w-8 border-r border-[var(--border)] border-opacity-60 bg-[var(--bg)] py-4 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)]"
+          className="shrink-0 w-8 border-r border-[var(--border)] border-opacity-60 bg-[var(--bg)] py-4 text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           title="Show code viewer"
           aria-label="Show code viewer"
         >
@@ -219,15 +224,17 @@ export default function LearnPage() {
       )}
 
       {/* Right: Question panel (emphasis) */}
-      <section className="flex flex-1 flex-col min-w-0 bg-[var(--card)] border-l border-[var(--border)] border-opacity-30">
+      <section className="flex flex-1 flex-col min-w-0 bg-[var(--card)] border-l border-[var(--border)] border-opacity-30" aria-labelledby="learn-heading">
         <div className="border-b border-[var(--border)] border-opacity-50 px-6 py-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-[var(--accent)]">
+          <h1 id="learn-heading" className="text-xs font-medium uppercase tracking-wider text-[var(--accent)]">
             Question
-          </span>
+          </h1>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
           {error && (
-            <p className="mb-4 text-sm text-[var(--error)]">{error}</p>
+            <p id="answer-error" ref={answerErrorRef} className="mb-4 text-sm text-[var(--error)]" tabIndex={-1} role="alert">
+              {error}
+            </p>
           )}
           {loadingQuestion ? (
             <p className="text-[var(--muted)]">Loading question…</p>
@@ -249,18 +256,24 @@ export default function LearnPage() {
 
               {!lastGrade ? (
                 <form onSubmit={submitAnswer} className="mt-6 max-w-xl space-y-4">
+                  <label htmlFor="answer-input" className="sr-only">
+                    Your answer
+                  </label>
                   <textarea
+                    ref={answerInputRef}
+                    id="answer-input"
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="Your answer…"
                     rows={6}
+                    aria-describedby={error ? 'answer-error' : undefined}
                     className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--bg)] px-4 py-3 font-mono text-sm focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
                   />
                   <div className="flex justify-start">
                     <button
                       type="submit"
                       disabled={grading}
-                      className="rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                      className="rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
                     >
                       {grading ? 'Grading…' : 'Submit'}
                     </button>
@@ -303,7 +316,7 @@ export default function LearnPage() {
                     <button
                       type="button"
                       onClick={fetchQuestion}
-                      className="rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)]"
+                      className="rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
                     >
                       Next question →
                     </button>
@@ -415,7 +428,7 @@ function TreeNodes({
       <button
         type="button"
         onClick={() => hasChildren && onToggle(node.path)}
-        className="flex w-full items-center gap-0.5 py-0.5 pr-1 text-left hover:bg-[var(--card)]"
+        className="flex w-full items-center gap-0.5 py-0.5 pr-1 text-left hover:bg-[var(--card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-0"
         style={{ paddingLeft: `${depth * 8 + 6}px` }}
       >
         <span className="w-3 shrink-0 text-[10px] text-[var(--muted)]">
@@ -458,7 +471,7 @@ function FileItem({
     <button
       type="button"
       onClick={() => setSelectedPath(path)}
-      className={`flex w-full items-center gap-0.5 py-0.5 pr-1 text-left hover:bg-[var(--card)] ${selected ? 'bg-[var(--card)] text-[var(--accent)]' : ''}`}
+      className={`flex w-full items-center gap-0.5 py-0.5 pr-1 text-left hover:bg-[var(--card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-0 ${selected ? 'bg-[var(--card)] text-[var(--accent)]' : ''}`}
       style={{ paddingLeft: `${depth * 8 + 6}px` }}
     >
       <span className="w-3 shrink-0" />

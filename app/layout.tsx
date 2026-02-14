@@ -29,8 +29,17 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <ThemeProvider>
           <ToastProvider>
+            <a
+              href="#main-content"
+              className="fixed left-4 top-4 z-[100] -translate-y-20 rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white shadow-lg transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg)]"
+            >
+              Skip to content
+            </a>
             <header className="border-b border-[var(--border)] border-opacity-50 px-6 py-4 flex items-center justify-between gap-4">
-              <a href="/" className="text-base font-medium text-[var(--text)] hover:text-[var(--accent)] transition-colors">
+              <a
+                href="/"
+                className="text-base font-medium text-[var(--text)] hover:text-[var(--accent)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
+              >
                 VibeCheck
               </a>
               <div className="flex items-center gap-2">
@@ -38,7 +47,7 @@ export default function RootLayout({
                 <ThemeToggle />
               </div>
             </header>
-            <main className="min-h-[calc(100vh-4rem)] flex flex-col">{children}</main>
+            <main id="main-content" className="min-h-[calc(100vh-4rem)] flex flex-col" tabIndex={-1}>{children}</main>
           </ToastProvider>
         </ThemeProvider>
       </body>

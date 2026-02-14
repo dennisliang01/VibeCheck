@@ -11,7 +11,7 @@ export default function ValidatePage() {
     <div className="mx-auto max-w-xl w-full px-6 py-12">
       <Link
         href="/"
-        className="text-sm text-[var(--muted)] hover:text-[var(--text)]"
+        className="text-sm text-[var(--muted)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
       >
         ← Home
       </Link>
@@ -27,7 +27,7 @@ export default function ValidatePage() {
         </p>
         <Link
           href={`/project/${id}`}
-          className="mt-6 inline-block text-sm text-[var(--accent)] hover:underline"
+          className="mt-6 inline-block text-sm text-[var(--accent)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
         >
           Go to code understanding (Q&A) instead →
         </Link>

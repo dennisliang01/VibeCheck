@@ -53,7 +53,8 @@ export default function ProjectPage() {
   if (status === 'error') {
     return (
       <div className="space-y-6">
-        <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--text)]">
+        <h1 className="sr-only">Project</h1>
+        <Link href="/" className="text-sm text-[var(--muted)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded">
           ← Home
         </Link>
         <div className="rounded-lg border-2 border-[var(--error)] bg-[var(--card)] p-4 text-sm text-[var(--error)]">
@@ -61,7 +62,7 @@ export default function ProjectPage() {
         </div>
         <Link
           href={`/project/${id}/learn`}
-          className="inline-block text-sm text-[var(--accent)] hover:underline"
+          className="inline-block text-sm text-[var(--accent)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
         >
           Try opening learn anyway →
         </Link>
@@ -71,10 +72,11 @@ export default function ProjectPage() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16">
+      <h1 className="sr-only">Project</h1>
       <p className="text-sm text-[var(--muted)]">
         {status === 'building' ? 'Building project map…' : 'Opening project…'}
       </p>
-      <Link href="/" className="text-xs text-[var(--muted)] hover:text-[var(--text)]">
+      <Link href="/" className="text-xs text-[var(--muted)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded">
         Back to home
       </Link>
     </div>

@@ -12,13 +12,16 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const nextStepSectionRef = useRef<HTMLDivElement>(null);
+  const uploadErrorRef = useRef<HTMLParagraphElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [nextStepInView, setNextStepInView] = useState(false);
 
   // When user uploads, scroll down to reveal the next step (Apple-style)
   useEffect(() => {
     if (!projectId) return;
     const t = setTimeout(() => {
-      nextStepSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const reduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      nextStepSectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     }, 150);
     return () => clearTimeout(t);
   }, [projectId]);
@@ -43,6 +46,7 @@ export default function HomePage() {
     if (!file) {
       setError('Please select a .zip file');
       showToast('Please select a .zip file', 'error');
+      requestAnimationFrame(() => uploadErrorRef.current?.focus() ?? fileInputRef.current?.focus());
       return;
     }
     setError(null);
@@ -99,14 +103,16 @@ export default function HomePage() {
             VibeCheck
           </h1>
           <p className="hero-subtitle-start mt-2 text-[var(--muted)]">
-            Understand and validate your code.
+            Know your system. Ship with confidence.
           </p>
         </div>
 
         <div className="hero-block-start relative flex flex-col items-center mt-10">
-          <form onSubmit={handleUpload} className="flex w-full flex-col gap-4">
+          <form id="upload-form" onSubmit={handleUpload} className="flex w-full flex-col gap-4">
           <label className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] py-8 px-6 transition-colors hover:border-[var(--muted)]">
             <input
+              ref={fileInputRef}
+              id="upload-file"
               type="file"
               accept=".zip"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -134,14 +140,17 @@ export default function HomePage() {
           </label>
 
           {error && (
-            <p className="text-center text-sm text-[var(--error)]">{error}</p>
+            <p id="upload-error" ref={uploadErrorRef} className="text-center text-sm text-[var(--error)]" tabIndex={-1} role="alert">
+              {error}
+            </p>
           )}
 
           <div className="flex gap-3 justify-center">
             <button
               type="submit"
               disabled={uploading || !file}
-              className="rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:pointer-events-none"
+              aria-describedby={error ? 'upload-error' : undefined}
+              className="rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
             >
               {uploading ? 'Uploading…' : 'Upload'}
             </button>
@@ -149,7 +158,7 @@ export default function HomePage() {
               type="button"
               onClick={handleLoadSample}
               disabled={loadingSample}
-              className="rounded-lg border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] disabled:opacity-40"
+              className="rounded-lg border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)] disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
             >
               {loadingSample ? 'Loading…' : 'Sample'}
             </button>
@@ -244,11 +253,11 @@ export default function HomePage() {
               <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 items-stretch mt-3">
                 <Link
                   href={`/project/${projectId}`}
-                  className="rounded-xl bg-[var(--accent)] p-5 sm:p-6 text-center hover:bg-[var(--accent-hover)] transition-colors block border border-transparent hover:border-[var(--accent-hover)]"
+                  className="rounded-xl bg-[var(--accent)] p-5 sm:p-6 text-center hover:bg-[var(--accent-hover)] transition-colors block border border-transparent hover:border-[var(--accent-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                 >
-                  <h3 className="text-base font-semibold text-white">Code understanding</h3>
+                  <h2 className="text-base font-semibold text-white">Code understanding</h2>
                   <p className="mt-1.5 text-sm text-white/90">
-                    Ask questions and learn how your code works.
+                    Assess whether you truly understand how the code works.
                   </p>
                 </Link>
 
@@ -258,11 +267,11 @@ export default function HomePage() {
 
                 <Link
                   href={`/project/${projectId}/validate`}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 text-center hover:border-[var(--muted)] hover:bg-[var(--border)]/30 transition-colors block"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 text-center hover:border-[var(--muted)] hover:bg-[var(--border)]/30 transition-colors block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                 >
-                  <h3 className="text-base font-semibold text-[var(--text)]">Code validation</h3>
+                  <h2 className="text-base font-semibold text-[var(--text)]">Code validation</h2>
                   <p className="mt-1.5 text-sm text-[var(--muted)]">
-                    Share with teammates and compare understanding.
+                  Evaluate your code like a senior engineer would
                   </p>
                 </Link>
               </div>
