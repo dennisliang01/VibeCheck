@@ -95,15 +95,15 @@ export default function HomePage() {
         }`}
       >
         <div className="text-center">
-          <h1 className="text-4xl font-semibold text-[var(--text)] tracking-tight">
+          <h1 className="hero-title-start text-4xl font-semibold text-[var(--text)] tracking-tight">
             VibeCheck
           </h1>
-          <p className="mt-2 text-[var(--muted)]">
+          <p className="hero-subtitle-start mt-2 text-[var(--muted)]">
             Understand and validate your code.
           </p>
         </div>
 
-        <div className="relative flex flex-col items-center mt-10">
+        <div className="hero-block-start relative flex flex-col items-center mt-10">
           <form onSubmit={handleUpload} className="flex w-full flex-col gap-4">
           <label className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] py-8 px-6 transition-colors hover:border-[var(--muted)]">
             <input
