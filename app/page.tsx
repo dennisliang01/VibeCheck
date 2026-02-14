@@ -11,7 +11,6 @@ export default function HomePage() {
   const [loadingSample, setLoadingSample] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
-  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const nextStepSectionRef = useRef<HTMLDivElement>(null);
   const [nextStepInView, setNextStepInView] = useState(false);
 
@@ -39,18 +38,6 @@ export default function HomePage() {
     return () => obs.disconnect();
   }, [projectId]);
 
-  const fetchProjects = useCallback(async () => {
-    const res = await fetch('/api/projects');
-    if (res.ok) {
-      const data = await res.json();
-      setProjects(data.projects || []);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
-
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
@@ -71,7 +58,6 @@ export default function HomePage() {
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       setProjectId(data.projectId);
       setFile(null);
-      await fetchProjects();
       showToast('Project uploaded successfully', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Upload failed';
@@ -90,7 +76,6 @@ export default function HomePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load sample');
       setProjectId(data.projectId);
-      await fetchProjects();
       showToast('Sample project loaded', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load sample';
@@ -102,11 +87,11 @@ export default function HomePage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl w-full px-6 flex flex-col">
-      {/* Hero: full-height until upload; then collapses so arrow extends from form */}
+    <div className="mx-auto max-w-xl w-full px-6 flex flex-col min-h-[calc(100vh-4rem)]">
+      {/* Hero: full screen until upload; then collapses so arrow extends from form */}
       <section
         className={`flex flex-col justify-center py-16 transition-[min-height] duration-500 ${
-          projectId ? 'min-h-0 pb-0' : 'min-h-[85vh]'
+          projectId ? 'min-h-0 pb-0' : 'min-h-[calc(100vh-4rem)]'
         }`}
       >
         <div className="text-center">
@@ -177,7 +162,7 @@ export default function HomePage() {
       {projectId && (
         <section
           ref={nextStepSectionRef}
-          className="scroll-mt-0 pt-0"
+          className="scroll-mt-0 pt-0 min-h-[calc(100vh-4rem)] flex flex-col justify-start"
           aria-label="Next step"
         >
           <div
@@ -256,7 +241,7 @@ export default function HomePage() {
                 />
               </svg>
 
-              <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 items-stretch -mt-px">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 items-stretch mt-3">
                 <Link
                   href={`/project/${projectId}`}
                   className="rounded-xl bg-[var(--accent)] p-5 sm:p-6 text-center hover:bg-[var(--accent-hover)] transition-colors block border border-transparent hover:border-[var(--accent-hover)]"
@@ -285,60 +270,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* Recent projects: separate “lower” section with distinct look */}
-      <section
-        className="mt-24 sm:mt-32 pt-16 pb-20 border-t border-[var(--border)] bg-[var(--card)]/30 rounded-2xl sm:rounded-3xl -mx-2 px-6 sm:px-8"
-        aria-label="Recent projects"
-      >
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-[var(--text)]">Recent projects</h2>
-          <button
-            type="button"
-            onClick={fetchProjects}
-            className="text-xs font-medium text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-        <ProjectList projects={projects} />
-      </section>
     </div>
-  );
-}
-
-function ProjectList({ projects }: { projects: Array<{ id: string; name: string }> }) {
-  if (projects.length === 0) {
-    return (
-      <p className="text-sm text-[var(--muted)] py-6">
-        No projects yet. Upload a .zip above to get started.
-      </p>
-    );
-  }
-  return (
-    <ul className="grid gap-3 sm:grid-cols-2">
-      {projects.map((p) => (
-        <li key={p.id}>
-          <Link
-            href={`/project/${p.id}`}
-            className="group flex items-center gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4 text-left transition-colors hover:border-[var(--accent)] hover:bg-[var(--card)]"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--card)] text-[var(--muted)] group-hover:bg-[var(--accent)]/20 group-hover:text-[var(--accent)] transition-colors">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-              </svg>
-            </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--text)]">
-              {p.name}
-            </span>
-            <span className="shrink-0 text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors" aria-hidden>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }

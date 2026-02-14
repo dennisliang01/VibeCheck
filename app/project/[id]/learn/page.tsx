@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useToast } from '@/components/ToastContext';
 
@@ -13,6 +12,7 @@ const FileSelectionContext = createContext<{
 interface QuestionObj {
   id: string;
   topicId: string;
+  category?: string;
   question: string;
   hint?: string;
   expectedConcepts?: string[];
@@ -220,16 +220,10 @@ export default function LearnPage() {
 
       {/* Right: Question panel (emphasis) */}
       <section className="flex flex-1 flex-col min-w-0 bg-[var(--card)] border-l border-[var(--border)] border-opacity-30">
-        <div className="flex items-center justify-between border-b border-[var(--border)] border-opacity-50 px-6 py-3">
+        <div className="border-b border-[var(--border)] border-opacity-50 px-6 py-3">
           <span className="text-xs font-medium uppercase tracking-wider text-[var(--accent)]">
             Question
           </span>
-          <Link
-            href="/"
-            className="text-xs text-[var(--muted)] hover:text-[var(--text)]"
-          >
-            Home
-          </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
           {error && (
@@ -239,6 +233,13 @@ export default function LearnPage() {
             <p className="text-[var(--muted)]">Loading question…</p>
           ) : question ? (
             <>
+              {question.category && (
+                <p className="mb-3">
+                  <span className="inline-flex items-center rounded-md bg-[var(--card)] border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">
+                    {question.category}
+                  </span>
+                </p>
+              )}
               <p className="whitespace-pre-wrap text-base leading-relaxed text-[var(--text)] md:text-lg">
                 {question.question}
               </p>
