@@ -14,7 +14,7 @@ export async function POST() {
     if (!fs.existsSync(zipPath) && fs.existsSync(SAMPLE_SRC_FALLBACK)) {
       zipPath = path.join(process.cwd(), 'examples', 'test_sample_temp.zip');
       const zip = new AdmZip();
-      function addDir(dir: string, prefix = '') {
+      const addDir = (dir: string, prefix = '') => {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const e of entries) {
           const full = path.join(dir, e.name);
@@ -22,7 +22,7 @@ export async function POST() {
           if (e.isDirectory()) addDir(full, name);
           else zip.addFile(name.replace(/\\/g, '/'), fs.readFileSync(full));
         }
-      }
+      };
       addDir(SAMPLE_SRC_FALLBACK);
       zip.writeZip(zipPath);
     }
