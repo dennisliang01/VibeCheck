@@ -1,45 +1,18 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastContext';
 
 export default function HomePage() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loadingSample, setLoadingSample] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const nextStepSectionRef = useRef<HTMLDivElement>(null);
   const uploadErrorRef = useRef<HTMLParagraphElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [nextStepInView, setNextStepInView] = useState(false);
-
-  // When user uploads, scroll down to reveal the next step (Apple-style)
-  useEffect(() => {
-    if (!projectId) return;
-    const t = setTimeout(() => {
-      const reduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      nextStepSectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    }, 150);
-    return () => clearTimeout(t);
-  }, [projectId]);
-
-  // Reveal animation when next step section enters viewport
-  useEffect(() => {
-    if (!projectId) return;
-    const el = nextStepSectionRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) setNextStepInView(true);
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [projectId]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +33,9 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');
-      setProjectId(data.projectId);
       setFile(null);
       showToast('Project uploaded successfully', 'success');
+      router.push(`/project/${data.projectId}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Upload failed';
       setError(msg);
@@ -79,8 +52,8 @@ export default function HomePage() {
       const res = await fetch('/api/load-sample', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load sample');
-      setProjectId(data.projectId);
       showToast('Sample project loaded', 'success');
+      router.push(`/project/${data.projectId}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load sample';
       setError(msg);
@@ -92,12 +65,7 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-xl w-full px-6 flex flex-col min-h-[calc(100vh-4rem)]">
-      {/* Hero: full screen until upload; then collapses so arrow extends from form */}
-      <section
-        className={`flex flex-col justify-center py-16 transition-[min-height] duration-500 ${
-          projectId ? 'min-h-0 pb-0' : 'min-h-[calc(100vh-4rem)]'
-        }`}
-      >
+      <section className="flex flex-col justify-center py-16 min-h-[calc(100vh-4rem)]">
         <div className="text-center">
           <h1 className="hero-title-start text-4xl font-semibold text-[var(--text)] tracking-tight">
             VibeCheck
@@ -166,119 +134,6 @@ export default function HomePage() {
         </form>
         </div>
       </section>
-
-      {/* Arrow extends from upload box down to choice cards */}
-      {projectId && (
-        <section
-          ref={nextStepSectionRef}
-          className="scroll-mt-0 pt-0 min-h-[calc(100vh-4rem)] flex flex-col justify-start"
-          aria-label="Next step"
-        >
-          <div
-            className={`flex flex-col items-center w-full transition-all duration-500 ease-out ${
-              nextStepInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            {/* One continuous arrow: long vertical from form, then Y into cards */}
-            <div className="w-full px-2 flex flex-col items-stretch">
-              <svg
-                width="100%"
-                height="180"
-                viewBox="0 0 600 180"
-                preserveAspectRatio="none"
-                className="overflow-visible shrink-0"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <defs>
-                  <marker
-                    id="arrowhead-left"
-                    markerWidth="6"
-                    markerHeight="6"
-                    refX="4"
-                    refY="3"
-                    orient="auto"
-                  >
-                    <path d="M0 0 L6 3 L0 6 Z" fill="var(--accent)" />
-                  </marker>
-                  <marker
-                    id="arrowhead-right"
-                    markerWidth="6"
-                    markerHeight="6"
-                    refX="4"
-                    refY="3"
-                    orient="auto"
-                  >
-                    <path d="M0 0 L6 3 L0 6 Z" fill="var(--accent)" />
-                  </marker>
-                </defs>
-                {/* Vertical stem: from upload box (top) all the way down to split */}
-                <line
-                  x1="300"
-                  y1="0"
-                  x2="300"
-                  y2="140"
-                  stroke="var(--accent)"
-                  strokeWidth="2"
-                  strokeDasharray="6 4"
-                  strokeLinecap="round"
-                  style={{ animation: 'flowDown 0.6s linear infinite' }}
-                />
-                {/* Left branch: split → left → down to Code understanding card */}
-                <path
-                  d="M300 140 H100 V180"
-                  stroke="var(--accent)"
-                  strokeWidth="2"
-                  strokeDasharray="6 4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  markerEnd="url(#arrowhead-left)"
-                  style={{ animation: 'flowDown 0.6s linear infinite' }}
-                />
-                {/* Right branch: split → right → down to Code validation card */}
-                <path
-                  d="M300 140 H500 V180"
-                  stroke="var(--accent)"
-                  strokeWidth="2"
-                  strokeDasharray="6 4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  markerEnd="url(#arrowhead-right)"
-                  style={{ animation: 'flowDown 0.6s linear infinite' }}
-                />
-              </svg>
-
-              <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 items-stretch mt-3">
-                <Link
-                  href={`/project/${projectId}`}
-                  className="rounded-xl bg-[var(--accent)] p-5 sm:p-6 text-center hover:bg-[var(--accent-hover)] transition-colors block border border-transparent hover:border-[var(--accent-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-                >
-                  <h2 className="text-base font-semibold text-white">Code understanding</h2>
-                  <p className="mt-1.5 text-sm text-white/90">
-                    Assess whether you truly understand how the code works.
-                  </p>
-                </Link>
-
-                <p className="text-sm text-[var(--muted)] flex items-center justify-center py-4 sm:py-8 order-first sm:order-none">
-                  Choose one
-                </p>
-
-                <Link
-                  href={`/project/${projectId}/validate`}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 text-center hover:border-[var(--muted)] hover:bg-[var(--border)]/30 transition-colors block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-                >
-                  <h2 className="text-base font-semibold text-[var(--text)]">Code validation</h2>
-                  <p className="mt-1.5 text-sm text-[var(--muted)]">
-                  Evaluate your code like a senior engineer would
-                  </p>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

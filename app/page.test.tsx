@@ -6,6 +6,10 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import HomePage from './page';
 import { ToastProvider } from '@/components/ToastContext';
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
 function renderHome() {
   return render(
     <ToastProvider>

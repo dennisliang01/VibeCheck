@@ -42,7 +42,8 @@ export async function GET(
     );
     const topic = projectMap.topics.find((t) => t.id === question.topicId) ?? null;
     const category = topicToCategory(topic, question.topicId);
-    return NextResponse.json({ ...question, category });
+    const fileHints = topic?.fileHints;
+    return NextResponse.json({ ...question, category, fileHints });
   } catch (e) {
     console.error('Generate question error:', e);
     return NextResponse.json(

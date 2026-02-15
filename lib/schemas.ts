@@ -76,3 +76,28 @@ export const SessionHistorySchema = z.object({
 
 export type SessionHistory = z.infer<typeof SessionHistorySchema>;
 export type SessionEntry = z.infer<typeof SessionEntrySchema>;
+
+// ----- Validation (for Python backend integration) -----
+export const ValidationScoresSchema = z.object({
+  performance: z.number().min(0).max(100),
+  security: z.number().min(0).max(100),
+  codeQuality: z.number().min(0).max(100),
+  architecture: z.number().min(0).max(100),
+});
+
+export const ValidationFeedbackItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  severity: z.enum(['high', 'medium', 'low']),
+  filePath: z.string().optional(),
+  recommendation: z.string(),
+});
+
+export const ValidationReportSchema = z.object({
+  scores: ValidationScoresSchema,
+  feedback: z.array(ValidationFeedbackItemSchema),
+});
+
+export type ValidationScores = z.infer<typeof ValidationScoresSchema>;
+export type ValidationFeedbackItem = z.infer<typeof ValidationFeedbackItemSchema>;
+export type ValidationReport = z.infer<typeof ValidationReportSchema>;
