@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ToastContext';
 
+const CATEGORY_PALETTE = [
+  'var(--category-ui)',
+  'var(--category-functionality)',
+  'var(--category-performance)',
+  'var(--category-data)',
+  'var(--category-security)',
+  'var(--category-general)',
+];
+
 interface QuestionObj {
   id: string;
   topicId: string;
@@ -13,25 +22,8 @@ interface QuestionObj {
   fileHints?: string[];
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'UI': 'var(--category-ui)',
-  'Functionality': 'var(--category-functionality)',
-  'Performance': 'var(--category-performance)',
-  'Data & state': 'var(--category-data)',
-  'Security': 'var(--category-security)',
-  'General': 'var(--category-general)',
-};
-
-function CategoryBadge({ category }: { category: string }) {
-  const bg = CATEGORY_COLORS[category] ?? 'var(--category-general)';
-  return (
-    <span
-      className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-white"
-      style={{ backgroundColor: bg }}
-    >
-      {category}
-    </span>
-  );
+function categoryColor(index: number): string {
+  return CATEGORY_PALETTE[index % CATEGORY_PALETTE.length];
 }
 
 interface GradeObj {
@@ -72,6 +64,9 @@ export function QAPanel({
   selectedFilePath,
 }: QAPanelProps) {
   const { showToast } = useToast();
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | 'Any'>('Any');
   const [question, setQuestion] = useState<QuestionObj | null>(null);
   const [answer, setAnswer] = useState('');
   const [loadingQuestion, setLoadingQuestion] = useState(true);
@@ -87,8 +82,10 @@ export function QAPanel({
     setError(null);
     setLoadingQuestion(true);
     setLastGrade(null);
+    const categoryParam =
+      selectedCategory && selectedCategory !== 'Any' ? `?category=${encodeURIComponent(selectedCategory)}` : '';
     try {
-      const res = await fetch(`/api/project/${projectId}/question`);
+      const res = await fetch(`/api/project/${projectId}/question${categoryParam}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load question');
       setQuestion(data);
@@ -103,14 +100,26 @@ export function QAPanel({
     } finally {
       setLoadingQuestion(false);
     }
-  }, [projectId, showToast, onSelectedFilePathChange]);
+  }, [projectId, selectedCategory, showToast, onSelectedFilePathChange]);
+
+  useEffect(() => {
+    fetch(`/api/project/${projectId}/question/categories`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data?.categories && setCategories(data.categories))
+      .finally(() => setCategoriesLoading(false));
+  }, [projectId]);
 
   useEffect(() => {
     fetchQuestion();
   }, [fetchQuestion]);
 
-  const submitAnswer = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCategorySelect = (cat: string | 'Any') => {
+    setSelectedCategory(cat);
+    setQuestion(null);
+    setLastGrade(null);
+  };
+
+  const doSubmit = async () => {
     if (!question) return;
     setError(null);
     setGrading(true);
@@ -136,15 +145,49 @@ export function QAPanel({
     }
   };
 
+  const submitAnswer = (e: React.FormEvent) => {
+    e.preventDefault();
+    doSubmit();
+  };
+
   return (
     <section
         className="flex flex-1 flex-col min-w-0 min-h-0 bg-[var(--card)] border-l border-[var(--border)] border-opacity-30"
-        aria-labelledby="learn-heading"
+        aria-label="Understanding questions"
       >
         <div className="shrink-0 border-b border-[var(--border)] border-opacity-50 px-6 py-3">
-          <h2 id="learn-heading" className="text-xs font-medium uppercase tracking-wider text-[var(--accent)]">
-            Question
-          </h2>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleCategorySelect('Any')}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] ${
+                selectedCategory === 'Any'
+                  ? 'border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent)]'
+                  : 'border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] hover:bg-[var(--border)]/50'
+              }`}
+            >
+              Any
+            </button>
+            {!categoriesLoading &&
+              categories.map((cat, i) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => handleCategorySelect(cat)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)] ${
+                    selectedCategory === cat
+                      ? 'text-white'
+                      : 'opacity-70 hover:opacity-100'
+                  }`}
+                  style={{
+                    backgroundColor: selectedCategory === cat ? categoryColor(i) : 'var(--card)',
+                    borderColor: selectedCategory === cat ? categoryColor(i) : 'var(--border)',
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+          </div>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
           {error && (
@@ -156,17 +199,6 @@ export function QAPanel({
             <p className="text-[var(--muted)]">Loading question…</p>
           ) : question ? (
             <>
-              {(() => {
-                const cats = question.categories ?? (question.category ? [question.category] : []);
-                if (cats.length === 0) return null;
-                return (
-                  <p className="mb-3 flex flex-wrap gap-2">
-                    {cats.map((cat) => (
-                      <CategoryBadge key={cat} category={cat} />
-                    ))}
-                  </p>
-                );
-              })()}
               <p className="whitespace-pre-wrap text-base leading-relaxed text-[var(--text)] md:text-lg">
                 {question.question}
               </p>
@@ -175,14 +207,20 @@ export function QAPanel({
               {!lastGrade ? (
                 <form onSubmit={submitAnswer} className="mt-6 w-full max-w-xl lg:max-w-none space-y-4">
                   <label htmlFor="answer-input" className="sr-only">
-                    Your answer
+                    Your answer (press Enter to submit)
                   </label>
                   <textarea
                     ref={answerInputRef}
                     id="answer-input"
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Your answer…"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (question && !grading) doSubmit();
+                      }
+                    }}
+                    placeholder="Your answer… (Enter to submit)"
                     rows={6}
                     aria-describedby={error ? 'answer-error' : undefined}
                     className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--bg)] px-4 py-3 font-mono text-sm focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
@@ -192,8 +230,9 @@ export function QAPanel({
                       type="submit"
                       disabled={grading}
                       className="rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
+                      title="Submit answer (Enter)"
                     >
-                      {grading ? 'Grading…' : 'Submit'}
+                      {grading ? 'Grading…' : 'Submit (↵)'}
                     </button>
                   </div>
                 </form>

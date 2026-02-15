@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMClient } from '@/lib/llm';
 import { loadProjectMap, saveProjectMap } from '@/lib/storage';
-import { buildProjectContext } from '@/lib/buildProjectMapSkill';
+import { buildProjectContext, deriveProjectNameFallback } from '@/lib/buildProjectMapSkill';
 import { ProjectMapSchema } from '@/lib/schemas';
 
 export async function GET(
@@ -46,6 +46,11 @@ export async function POST(
     const client = getLLMClient();
     const raw = await client.buildProjectMap(context);
     raw.projectId = projectId;
+    raw.name = deriveProjectNameFallback(
+      projectId,
+      context.fileList ?? [],
+      raw.name ?? ''
+    );
     const map = ProjectMapSchema.parse(raw);
     saveProjectMap(projectId, map);
 

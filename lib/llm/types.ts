@@ -21,7 +21,8 @@ export interface LLMClient {
   generateQuestion(
     projectMap: ProjectMap,
     learnerModel: LearnerModel,
-    history: SessionEntry[]
+    history: SessionEntry[],
+    category?: string
   ): Promise<QuestionObj>;
   gradeAnswer(
     questionObj: QuestionObj,

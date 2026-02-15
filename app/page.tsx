@@ -14,19 +14,12 @@ export default function HomePage() {
   const uploadErrorRef = useRef<HTMLParagraphElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) {
-      setError('Please select a .zip file');
-      showToast('Please select a .zip file', 'error');
-      requestAnimationFrame(() => uploadErrorRef.current?.focus() ?? fileInputRef.current?.focus());
-      return;
-    }
+  const doUpload = async (fileToUpload: File) => {
     setError(null);
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -43,6 +36,26 @@ export default function HomePage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      setError('Please select a .zip file');
+      showToast('Please select a .zip file', 'error');
+      requestAnimationFrame(() => uploadErrorRef.current?.focus() ?? fileInputRef.current?.focus());
+      return;
+    }
+    await doUpload(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    setFile(selected);
+    if (selected) {
+      doUpload(selected);
+    }
+    e.target.value = '';
   };
 
   const handleLoadSample = async () => {
@@ -83,7 +96,7 @@ export default function HomePage() {
               id="upload-file"
               type="file"
               accept=".zip"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={handleFileChange}
               className="hidden"
             />
             <svg
@@ -102,7 +115,7 @@ export default function HomePage() {
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
             <span className="text-sm font-medium text-[var(--muted)]">
-              {file ? file.name : 'Upload code'}
+              {uploading ? 'Uploading…' : file ? file.name : 'Upload code'}
             </span>
             <span className="text-xs text-[var(--muted)] opacity-80">.zip · Max 50MB</span>
           </label>

@@ -25,7 +25,7 @@ let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
 async function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: ['github-dark'],
+      themes: ['github-dark', 'github-light'],
       langs: [...LANGS],
     });
   }
@@ -78,14 +78,19 @@ export function detectLanguage(filePath: string): string {
 
 /**
  * Highlight code with Shiki (server-side).
- * Uses github-dark theme. Caches the highlighter globally.
+ * Uses github-light for light mode, github-dark for dark mode. Caches the highlighter globally.
  */
-export async function highlightCode(code: string, filePath: string): Promise<string> {
+export async function highlightCode(
+  code: string,
+  filePath: string,
+  theme: 'light' | 'dark' = 'dark'
+): Promise<string> {
   const lang = detectLanguage(filePath);
   const safeLang = LANGS.includes(lang as (typeof LANGS)[number]) ? lang : 'plaintext';
   const highlighter = await getHighlighter();
+  const shikiTheme = theme === 'light' ? 'github-light' : 'github-dark';
   return highlighter.codeToHtml(code, {
     lang: safeLang,
-    theme: 'github-dark',
+    theme: shikiTheme,
   });
 }

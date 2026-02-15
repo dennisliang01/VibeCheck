@@ -1,7 +1,58 @@
+import fs from 'fs';
+import path from 'path';
 import type { TreeNode } from './workspace';
-import { repoTree, searchRepo, getFile } from './workspace';
+import { repoTree, searchRepo, getFile, getWorkspaceDir } from './workspace';
 import { buildFilesSummary } from './filesSummary';
 import type { ProjectContext } from './llm/types';
+
+/** Check if LLM name looks descriptive (not an ID). */
+function isDescriptiveName(name: string, projectId: string): boolean {
+  const t = name?.trim() ?? '';
+  if (!t || t.length < 2) return false;
+  if (t === projectId) return false;
+  if (/^[a-f0-9-]{8,}$/i.test(t)) return false; // uuid/hex
+  if (/^[a-z0-9]{12,}$/i.test(t) && !/\s/.test(t)) return false; // id-like
+  return true;
+}
+
+/**
+ * Fallback project name when LLM returns something non-descriptive.
+ * Tries package.json "name", then top-level folder, then projectId.
+ */
+export function deriveProjectNameFallback(
+  projectId: string,
+  fileList: string[],
+  llmName: string
+): string {
+  if (isDescriptiveName(llmName, projectId)) return llmName;
+
+  const root = getWorkspaceDir(projectId);
+  const pkgRel = fileList.find((f) => f === 'package.json' || f.endsWith('/package.json'));
+  if (pkgRel) {
+    const full = path.join(root, pkgRel);
+    if (fs.existsSync(full)) {
+      try {
+        const raw = fs.readFileSync(full, 'utf-8');
+        const pkg = JSON.parse(raw);
+        const n = pkg?.name;
+        if (typeof n === 'string' && isDescriptiveName(n, projectId)) return n;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  const top = fileList
+    .map((f) => f.split('/')[0])
+    .filter((d) => d && !d.startsWith('.'));
+  if (top.length > 0) {
+    const slug = top[0];
+    if (isDescriptiveName(slug, projectId))
+      return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  return projectId;
+}
 
 // Set number of key files to 6 to limit the context window for the LLM
 const MAX_KEY_FILES = 6;

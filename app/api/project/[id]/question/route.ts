@@ -2,31 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLLMClient } from '@/lib/llm';
 import { loadProjectMap, loadLearnerModel, loadSessionHistory } from '@/lib/storage';
 import type { ProjectMapTopic } from '@/lib/schemas';
+import { topicToGeneralCategories, isGeneralCategory } from '@/lib/questionCategories';
 
-const CATEGORIES = ['UI', 'Functionality', 'Performance', 'Data & state', 'Security', 'General'] as const;
-export type QuestionCategory = (typeof CATEGORIES)[number];
-
-/** Map project topic to one or more categories. A topic can match multiple categories. */
-function topicToCategories(topic: ProjectMapTopic | null, topicId: string): QuestionCategory[] {
-  const text = topic
-    ? `${topic.title} ${topic.description} ${topic.id}`.toLowerCase()
-    : topicId.toLowerCase();
-  const matches: QuestionCategory[] = [];
-  if (/\b(ui|component|layout|view|render|style|css)\b/.test(text)) matches.push('UI');
-  if (/\b(performance|optim|speed|memory|cache)\b/.test(text)) matches.push('Performance');
-  if (/\b(data|state|schema|model|store|database|api)\b/.test(text)) matches.push('Data & state');
-  if (/\b(auth|security|login|permission|token)\b/.test(text)) matches.push('Security');
-  if (/\b(entry|setup|route|flow|logic|function|handler)\b/.test(text)) matches.push('Functionality');
-  if (matches.length === 0) matches.push('General');
-  return matches;
+/** Filter topics to those matching the general category. */
+function filterTopicsByCategory(
+  projectMap: { topics: ProjectMapTopic[] },
+  category: string
+): ProjectMapTopic[] {
+  if (!isGeneralCategory(category)) return projectMap.topics;
+  return projectMap.topics.filter((t) =>
+    topicToGeneralCategories(t.title, t.description, t.id).includes(category)
+  );
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: projectId } = await params;
+    const categoryParam = req.nextUrl.searchParams.get('category');
+    const category = categoryParam?.trim() || null;
+
     const projectMap = loadProjectMap(projectId);
     if (!projectMap) {
       return NextResponse.json(
@@ -34,16 +31,28 @@ export async function GET(
         { status: 400 }
       );
     }
+
+    let mapForQuestion = projectMap;
+    if (category) {
+      const filtered = filterTopicsByCategory(projectMap, category);
+      if (filtered.length > 0) {
+        mapForQuestion = { ...projectMap, topics: filtered };
+      }
+    }
+
     const learnerModel = loadLearnerModel();
     const history = loadSessionHistory(projectId);
     const client = getLLMClient();
     const question = await client.generateQuestion(
-      projectMap,
+      mapForQuestion,
       learnerModel,
-      history.entries
+      history.entries,
+      category ?? undefined
     );
     const topic = projectMap.topics.find((t) => t.id === question.topicId) ?? null;
-    const categories = topicToCategories(topic, question.topicId);
+    const categories = topic
+      ? topicToGeneralCategories(topic.title, topic.description, topic.id)
+      : [];
     const fileHints = topic?.fileHints;
     return NextResponse.json({ ...question, categories, fileHints });
   } catch (e) {

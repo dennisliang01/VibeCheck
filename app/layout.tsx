@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import { ToastProvider } from '@/components/ToastContext';
 import { ThemeProvider } from '@/components/ThemeContext';
@@ -38,12 +39,14 @@ export default function RootLayout({
             <header className="border-b border-[var(--border)] border-opacity-50 px-6 py-4 flex items-center justify-between gap-4">
               <a
                 href="/"
-                className="text-base font-medium text-[var(--text)] hover:text-[var(--accent)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
+                className="text-xl font-semibold text-[var(--text)] hover:text-[var(--accent)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
               >
                 VibeRight
               </a>
               <div className="flex items-center gap-2">
-                <HomeNavLink />
+                <Suspense fallback={null}>
+                  <HomeNavLink />
+                </Suspense>
                 <ThemeToggle />
               </div>
             </header>

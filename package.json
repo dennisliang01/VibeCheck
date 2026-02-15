@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "create-sample-zip": "node scripts/create-sample-zip.js"
+    "create-sample-zip": "node scripts/create-sample-zip.js",
+    "create-test-sample-zip": "node scripts/create-test-sample-zip.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",

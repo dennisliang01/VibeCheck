@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useTheme } from '@/components/ThemeContext';
 
 const FileSelectionContext = createContext<{
   selectedPath: string | null;
@@ -124,14 +125,24 @@ export function CodePanel({
 
 function FileTree({ projectId }: { projectId: string }) {
   const [tree, setTree] = useState<TreeNode | null>(null);
-  const [openDirs, setOpenDirs] = useState<Set<string>>(new Set(['']));
+  const [openDirs, setOpenDirs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/project/${projectId}/tree`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!cancelled && data) setTree(data);
+        if (!cancelled && data) {
+          setTree(data);
+          const topDirs = (data.children ?? [])
+            .filter((c: TreeNode) => !c.isFile && c.path)
+            .map((c: TreeNode) => c.path);
+          setOpenDirs((prev) => {
+            const next = new Set(prev);
+            topDirs.forEach((p: string) => next.add(p));
+            return next;
+          });
+        }
       });
     return () => { cancelled = true; };
   }, [projectId]);
@@ -153,9 +164,18 @@ function FileTree({ projectId }: { projectId: string }) {
     );
   }
 
+  const topLevel = tree.children ?? [];
   return (
     <div className="w-36 shrink-0 overflow-y-auto border-r border-[var(--border)] border-opacity-40 py-0.5 font-mono text-[11px]">
-      <TreeNodes node={tree} openDirs={openDirs} onToggle={toggle} depth={0} />
+      {topLevel.map((node) => (
+        <TreeNodes
+          key={node.path}
+          node={node}
+          openDirs={openDirs}
+          onToggle={toggle}
+          depth={0}
+        />
+      ))}
     </div>
   );
 }
@@ -242,6 +262,7 @@ function FileItem({
 }
 
 function FileViewer({ projectId }: { projectId: string }) {
+  const { theme } = useTheme();
   const { selectedPath } = useContext(FileSelectionContext);
   const [content, setContent] = useState<string | null>(null);
   const [html, setHtml] = useState<string | null>(null);
@@ -258,7 +279,7 @@ function FileViewer({ projectId }: { projectId: string }) {
     setLoading(true);
     setError(null);
     fetch(
-      `/api/project/${projectId}/file?path=${encodeURIComponent(selectedPath)}&highlight=1`
+      `/api/project/${projectId}/file?path=${encodeURIComponent(selectedPath)}&highlight=1&theme=${theme}`
     )
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));
@@ -278,7 +299,7 @@ function FileViewer({ projectId }: { projectId: string }) {
         setHtml(null);
       })
       .finally(() => setLoading(false));
-  }, [projectId, selectedPath]);
+  }, [projectId, selectedPath, theme]);
 
   if (!selectedPath) {
     return (

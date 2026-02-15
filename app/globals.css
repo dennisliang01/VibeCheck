@@ -21,21 +21,21 @@
 }
 
 [data-theme="light"] {
-  --bg: #f5f6f8;
+  --bg: #f0f2f5;
   --card: #ffffff;
-  --border: #e2e5ea;
-  --text: #1a1d24;
-  --muted: #5c6370;
+  --border: #b8bdc8;
+  --text: #0f1216;
+  --muted: #3d4451;
   --accent: #0d9488;
   --accent-hover: #0f766e;
-  --success: #16a34a;
-  --error: #dc2626;
-  --category-ui: #2563eb;
+  --success: #15803d;
+  --error: #b91c1c;
+  --category-ui: #1d4ed8;
   --category-functionality: #0d9488;
-  --category-performance: #16a34a;
-  --category-data: #9333ea;
-  --category-security: #ea580c;
-  --category-general: #5c6370;
+  --category-performance: #15803d;
+  --category-data: #7e22ce;
+  --category-security: #c2410c;
+  --category-general: #3d4451;
 }
 
 body {

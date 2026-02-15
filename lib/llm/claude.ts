@@ -62,9 +62,7 @@ async function callClaude(system: string, user: string): Promise<string> {
 export class ClaudeLLMClient implements LLMClient {
   async buildProjectMap(context: ProjectContext): Promise<ProjectMap> {
     const system = `You are a coding coach. Output only valid JSON. No markdown, no explanation.`;
-    const name = context.name || 'Unknown';
     let user = `Create a project map (JSON) for this codebase.
-Project name: ${name}
 - fileCount: ${context.fileCount}
 - fileList (first 80): ${JSON.stringify(context.fileList.slice(0, 80))}
 - extensions: ${JSON.stringify(context.extensions)}
@@ -75,10 +73,11 @@ Project name: ${name}
         user += `\n--- ${k.path} ---\n${k.content}\n`;
       }
     }
-    user += `\nRespond with a single JSON object (use projectId: "" as placeholder):
+    user += `\nRespond with a single JSON object (use projectId: "" as placeholder).
+For "name": generate a short, descriptive project title (2–5 words) from the codebase—e.g. from README, package.json, or main files. Examples: "Weather Dashboard App", "User Auth API", "Task Manager". Do NOT use project IDs or random strings.
 {
   "projectId": "",
-  "name": "string",
+  "name": "short descriptive title from codebase",
   "summary": "string",
   "topics": [{"id": "string", "title": "string", "description": "string", "fileHints": ["path"]}],
   "builtAt": "ISO date string"
@@ -92,12 +91,24 @@ Project name: ${name}
   async generateQuestion(
     projectMap: ProjectMap,
     learnerModel: LearnerModel,
-    history: SessionEntry[]
+    history: SessionEntry[],
+    category?: string
   ): Promise<QuestionObj> {
     const system = `You are a coding coach for novice programmers. Output only valid JSON. No markdown.`;
+    const categoryInstruction = category
+      ? `IMPORTANT: Generate a question that fits the category "${category}":
+- UI: components, layout, rendering, styling, user interface
+- Functionality: app flow, entry points, dependencies, what runs when, debugging
+- Performance: speed, memory, caching, optimization
+- Data & state: data flow, API, database, state management, schemas
+- Security: auth, validation, permissions, sanitization
+- General: broad understanding, file roles, flow
+Focus the question on "${category}"-related concepts and files.`
+      : '';
     const user = `Project map: ${JSON.stringify(projectMap)}
 Learner masteries: ${JSON.stringify(learnerModel.topicMasteries)}
 Recent history (last 5): ${JSON.stringify(history.slice(-5))}
+${categoryInstruction}
 
 Generate ONE code-understanding question for a NOVICE programmer (beginner). Rules:
 - Use simple, everyday words. Avoid jargon; if you use a term like "entry point" or "bootstrap", the question should make it clear what you mean.
@@ -120,7 +131,11 @@ Output JSON: {"id": "unique-id", "topicId": "from map", "question": "string", "h
 User answer: ${userAnswer}
 Project map: ${JSON.stringify(projectMap)}
 
-Grade the answer (0-100) and give brief feedback. Output JSON:
+Grade the answer (0-100) and give brief feedback.
+- Do NOT penalize for spelling mistakes or typos.
+- Do NOT require complete sentences; grade on concepts and keywords covered.
+- Be lenient: bullet points, fragments, and rough answers are fine.
+Output JSON:
 {"score": number, "feedback": "string", "correctPoints": ["string"], "missedPoints": ["string"], "nextRecommendedTopicId": "optional topic id"}`;
     const raw = await callClaude(system, user);
     const parsed = JSON.parse(extractJsonBlock(raw));

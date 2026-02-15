@@ -17,7 +17,9 @@ export async function GET(
     }
     const content = getFile(projectId, pathParam);
     const highlight = req.nextUrl.searchParams.get('highlight') === '1';
-    const html = highlight ? await highlightCode(content, pathParam) : undefined;
+    const themeParam = req.nextUrl.searchParams.get('theme');
+    const theme = themeParam === 'light' ? 'light' : 'dark';
+    const html = highlight ? await highlightCode(content, pathParam, theme) : undefined;
     return NextResponse.json({
       path: pathParam,
       content,
