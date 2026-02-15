@@ -128,6 +128,7 @@ function WorkspaceShellInner({ projectId, projectName }: WorkspaceShellProps) {
               <QAPanel
                 projectId={projectId}
                 onSelectedFilePathChange={setSelectedFilePath}
+                selectedFilePath={selectedFilePath}
               />
             </div>
           ) : (

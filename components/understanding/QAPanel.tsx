@@ -45,6 +45,7 @@ interface GradeObj {
 interface QAPanelProps {
   projectId: string;
   onSelectedFilePathChange: (path: string | null) => void;
+  selectedFilePath: string | null;
 }
 
 function HintReveal({ hint }: { hint: string }) {
@@ -68,6 +69,7 @@ function HintReveal({ hint }: { hint: string }) {
 export function QAPanel({
   projectId,
   onSelectedFilePathChange,
+  selectedFilePath,
 }: QAPanelProps) {
   const { showToast } = useToast();
   const [question, setQuestion] = useState<QuestionObj | null>(null);
@@ -80,6 +82,9 @@ export function QAPanel({
   const answerInputRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchQuestion = useCallback(async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/45c7ea39-0dd0-47c8-bfb5-fbb1c8ff0374',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QAPanel.tsx:fetchQuestion',message:'fetchQuestion called',data:{projectId},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     setError(null);
     setLoadingQuestion(true);
     setLastGrade(null);
@@ -89,7 +94,10 @@ export function QAPanel({
       if (!res.ok) throw new Error(data.error || 'Failed to load question');
       setQuestion(data);
       setAnswer('');
-      if (data.fileHints?.[0]) {
+      if (data.fileHints?.[0] && !selectedFilePath) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/45c7ea39-0dd0-47c8-bfb5-fbb1c8ff0374',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QAPanel.tsx:fileHints',message:'Auto-open fileHints (selectedFilePath was empty)',data:{fileHint:data.fileHints[0],selectedFilePath,runId:'post-fix'},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         onSelectedFilePathChange(data.fileHints[0]);
       }
     } catch (e) {
@@ -99,7 +107,7 @@ export function QAPanel({
     } finally {
       setLoadingQuestion(false);
     }
-  }, [projectId, showToast, onSelectedFilePathChange]);
+  }, [projectId, showToast, onSelectedFilePathChange, selectedFilePath]);
 
   useEffect(() => {
     fetchQuestion();

@@ -244,31 +244,38 @@ function FileItem({
 function FileViewer({ projectId }: { projectId: string }) {
   const { selectedPath } = useContext(FileSelectionContext);
   const [content, setContent] = useState<string | null>(null);
+  const [html, setHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedPath) {
       setContent(null);
+      setHtml(null);
       setError(null);
       return;
     }
     setLoading(true);
     setError(null);
-    fetch(`/api/project/${projectId}/file?path=${encodeURIComponent(selectedPath)}`)
+    fetch(
+      `/api/project/${projectId}/file?path=${encodeURIComponent(selectedPath)}&highlight=1`
+    )
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.error || !data?.content) {
           setError(data?.error || 'File not found');
           setContent(null);
+          setHtml(null);
         } else {
           setContent(data.content);
+          setHtml(data.html ?? null);
           setError(null);
         }
       })
       .catch(() => {
         setError('Could not load file');
         setContent(null);
+        setHtml(null);
       })
       .finally(() => setLoading(false));
   }, [projectId, selectedPath]);
@@ -309,20 +316,27 @@ function FileViewer({ projectId }: { projectId: string }) {
         {selectedPath}
       </div>
       <div className="flex-1 overflow-auto">
-        <pre className="min-h-full font-mono text-[11px] leading-snug text-[var(--text)] p-2">
-          <code>
-            {lines.map((line, i) => (
-              <div key={i} className="table-row">
-                <span className="table-cell w-6 select-none pr-2 text-right text-[var(--muted)] opacity-70">
-                  {i + 1}
-                </span>
-                <span className="table-cell whitespace-pre break-all">
-                  {line || ' '}
-                </span>
-              </div>
-            ))}
-          </code>
-        </pre>
+        {html ? (
+          <div
+            className="overflow-auto text-sm rounded-md border border-[var(--border)] border-opacity-40 bg-neutral-950 p-2 font-mono text-[11px] leading-snug [&_pre]:m-0 [&_pre]:p-0 [&_pre]:bg-transparent [&_code]:block [&_code]:min-w-0"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        ) : (
+          <pre className="min-h-full font-mono text-[11px] leading-snug text-[var(--text)] p-2">
+            <code>
+              {lines.map((line, i) => (
+                <div key={i} className="table-row">
+                  <span className="table-cell w-6 select-none pr-2 text-right text-[var(--muted)] opacity-70">
+                    {i + 1}
+                  </span>
+                  <span className="table-cell whitespace-pre break-all">
+                    {line || ' '}
+                  </span>
+                </div>
+              ))}
+            </code>
+          </pre>
+        )}
       </div>
     </div>
   );

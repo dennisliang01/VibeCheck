@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFile } from '@/lib/workspace';
+import { highlightCode } from '@/lib/highlight';
 
 export async function GET(
   req: NextRequest,
@@ -15,7 +16,13 @@ export async function GET(
       );
     }
     const content = getFile(projectId, pathParam);
-    return NextResponse.json({ path: pathParam, content });
+    const highlight = req.nextUrl.searchParams.get('highlight') === '1';
+    const html = highlight ? await highlightCode(content, pathParam) : undefined;
+    return NextResponse.json({
+      path: pathParam,
+      content,
+      ...(html !== undefined && { html }),
+    });
   } catch (e) {
     console.error('Get file error:', e);
     return NextResponse.json(
