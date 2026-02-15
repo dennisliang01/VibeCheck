@@ -7,13 +7,17 @@ import {
   blobProjectExists,
 } from './blobStorage';
 
-/** On Vercel, process.cwd() is read-only; use /tmp for writable workspace and data dirs. */
+/** On Vercel/Netlify, process.cwd() is read-only; use /tmp for writable workspace and data dirs. */
+function isReadOnlyFs(): boolean {
+  return !!(process.env.VERCEL || process.env.NETLIFY);
+}
+
 export function getWorkspacesDirPath(): string {
-  return process.env.VERCEL ? path.join('/tmp', 'workspaces') : path.join(process.cwd(), 'workspaces');
+  return isReadOnlyFs() ? path.join('/tmp', 'workspaces') : path.join(process.cwd(), 'workspaces');
 }
 
 function getDataDirPath(): string {
-  return process.env.VERCEL ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
+  return isReadOnlyFs() ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
 }
 
 const MAX_FILES_FOR_SEARCH = 500;

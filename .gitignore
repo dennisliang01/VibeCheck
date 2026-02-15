@@ -32,3 +32,6 @@ Backend/.env
 .cursorrules
 /cursor-rules.md
 .vercel
+
+# Local Netlify folder
+.netlify

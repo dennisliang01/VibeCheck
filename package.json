@@ -13,7 +13,8 @@
     "lint": "next lint",
     "test": "jest",
     "create-sample-zip": "node scripts/create-sample-zip.js",
-    "create-test-sample-zip": "node scripts/create-test-sample-zip.js"
+    "create-test-sample-zip": "node scripts/create-test-sample-zip.js",
+    "dev:netlify": "npx netlify dev"
   },
   "dependencies": {
     "@vercel/blob": "^2.2.0",
@@ -25,6 +26,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.0.0",
+    "netlify-cli": "^17.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

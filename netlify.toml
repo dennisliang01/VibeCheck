@@ -1,0 +1,13 @@
+# Netlify config for Next.js (VibeCheck)
+# https://docs.netlify.com/frameworks/next-js/
+
+[dev]
+  targetPort = 3001
+  command = "npm run dev:alt"
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
