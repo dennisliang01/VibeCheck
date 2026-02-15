@@ -1,13 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 
-const WORKSPACES_DIR = path.join(process.cwd(), 'workspaces');
-const DATA_DIR = path.join(process.cwd(), 'data');
+/** On Vercel, process.cwd() is read-only; use /tmp for writable workspace and data dirs. */
+export function getWorkspacesDirPath(): string {
+  return process.env.VERCEL ? path.join('/tmp', 'workspaces') : path.join(process.cwd(), 'workspaces');
+}
+
+function getDataDirPath(): string {
+  return process.env.VERCEL ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
+}
 
 const MAX_FILES_FOR_SEARCH = 500;
 
 export function getWorkspaceDir(projectId: string): string {
-  const dir = path.join(WORKSPACES_DIR, projectId);
+  const dir = path.join(getWorkspacesDirPath(), projectId);
   if (!fs.existsSync(dir)) {
     throw new Error(`Project not found: ${projectId}`);
   }
@@ -15,17 +21,19 @@ export function getWorkspaceDir(projectId: string): string {
 }
 
 export function getDataDir(): string {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  const dataDir = getDataDirPath();
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
   }
-  return DATA_DIR;
+  return dataDir;
 }
 
 export function ensureWorkspacesDir(): string {
-  if (!fs.existsSync(WORKSPACES_DIR)) {
-    fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
+  const workspacesDir = getWorkspacesDirPath();
+  if (!fs.existsSync(workspacesDir)) {
+    fs.mkdirSync(workspacesDir, { recursive: true });
   }
-  return WORKSPACES_DIR;
+  return workspacesDir;
 }
 
 export interface TreeNode {

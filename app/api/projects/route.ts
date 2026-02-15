@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
-import path from 'path';
-
-const WORKSPACES_DIR = path.join(process.cwd(), 'workspaces');
+import { getWorkspacesDirPath } from '@/lib/workspace';
 
 export async function GET() {
   try {
-    if (!fs.existsSync(WORKSPACES_DIR)) {
+    const workspacesDir = getWorkspacesDirPath();
+    if (!fs.existsSync(workspacesDir)) {
       return NextResponse.json({ projects: [] });
     }
-    const dirs = fs.readdirSync(WORKSPACES_DIR, { withFileTypes: true });
+    const dirs = fs.readdirSync(workspacesDir, { withFileTypes: true });
     const projects = dirs
       .filter((d) => d.isDirectory())
       .map((d) => ({
