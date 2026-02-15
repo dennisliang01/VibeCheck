@@ -1,3 +1,15 @@
+/** Question categories used by the mock LLM and question generation. */
+export const QUESTION_CATEGORIES = [
+  'UI',
+  'Functionality',
+  'Performance',
+  'Data & state',
+  'Security',
+  'General',
+] as const;
+
+export type QuestionCategory = (typeof QUESTION_CATEGORIES)[number];
+
 /** General 2-word question categories. Used to map project topics to broader labels. */
 export const GENERAL_CATEGORIES = [
   'App Setup',
