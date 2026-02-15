@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { repoTree } from '@/lib/workspace';
+import { repoTreeAsync } from '@/lib/workspace';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: NextRequest,
@@ -7,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id: projectId } = await params;
-    const tree = repoTree(projectId);
+    const tree = await repoTreeAsync(projectId);
     return NextResponse.json(tree);
   } catch (e) {
     console.error('Tree error:', e);

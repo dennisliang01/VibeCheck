@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMClient } from '@/lib/llm';
-import { loadProjectMap, loadLearnerModel, loadSessionHistory } from '@/lib/storage';
+import { loadProjectMapAsync, loadLearnerModelAsync, loadSessionHistoryAsync } from '@/lib/storage';
 import type { ProjectMapTopic } from '@/lib/schemas';
 import { topicToGeneralCategories, isGeneralCategory } from '@/lib/questionCategories';
 
@@ -15,6 +15,8 @@ function filterTopicsByCategory(
   );
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -24,7 +26,7 @@ export async function GET(
     const categoryParam = req.nextUrl.searchParams.get('category');
     const category = categoryParam?.trim() || null;
 
-    const projectMap = loadProjectMap(projectId);
+    const projectMap = await loadProjectMapAsync(projectId);
     if (!projectMap) {
       return NextResponse.json(
         { error: 'Build project map first (POST /api/project/[id]/map)' },
@@ -40,8 +42,8 @@ export async function GET(
       }
     }
 
-    const learnerModel = loadLearnerModel();
-    const history = loadSessionHistory(projectId);
+    const learnerModel = await loadLearnerModelAsync();
+    const history = await loadSessionHistoryAsync(projectId);
     const client = getLLMClient();
     const question = await client.generateQuestion(
       mapForQuestion,

@@ -17,11 +17,22 @@ function shouldSkipEntry(entryPath: string): boolean {
   return false;
 }
 
-function stripRootFolder(entryPath: string): string {
-  const n = normPath(entryPath).replace(/^\/+/, '');
-  const idx = n.indexOf('/');
-  if (idx === -1) return n;
-  return n.slice(idx + 1);
+/**
+ * Strip a single common root folder only when the zip has one (e.g. "test_sample/main.py" -> "main.py").
+ * Otherwise preserve full structure (e.g. "main.py", "src/file.py" stay as-is).
+ */
+function stripSingleRootFolder(rawPath: string, allRawPaths: string[]): string {
+  const n = normPath(rawPath).replace(/^\/+/, '');
+  const parts = n.split('/').filter(Boolean);
+  if (parts.length === 0) return n;
+  const firstSegments = new Set(
+    allRawPaths.map((p) => normPath(p).replace(/^\/+/, '').split('/').filter(Boolean)[0]).filter(Boolean)
+  );
+  if (firstSegments.size === 1 && parts[0] === firstSegments.values().next().value) {
+    if (parts.length === 1) return n;
+    return parts.slice(1).join('/');
+  }
+  return n;
 }
 
 /**
@@ -43,10 +54,11 @@ export function extractZipToProjectDir(
     throw new Error(`Too many files in zip (max ${MAX_FILES})`);
   }
 
+  const allRawPaths = extractable.map((e) => normPath(e.entryName));
   let count = 0;
   for (const entry of extractable) {
     const rawPath = normPath(entry.entryName);
-    const entryPath = stripRootFolder(rawPath);
+    const entryPath = stripSingleRootFolder(rawPath, allRawPaths);
     if (!entryPath || entryPath.includes('..')) continue;
     const size = entry.header?.size ?? 0;
     if (size > MAX_SINGLE_FILE_BYTES) continue;
@@ -61,4 +73,33 @@ export function extractZipToProjectDir(
 
 export function generateProjectId(): string {
   return `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Yield zip file entries for uploading to blob storage (no fs write).
+ * Returns array of { relativePath, data } for non-skipped files under size limit.
+ */
+export function getZipEntriesForBlob(zip: AdmZip): Array<{ relativePath: string; data: Buffer }> {
+  const allEntries = zip.getEntries();
+  const extractable = allEntries.filter((e) => {
+    if (e.isDirectory) return false;
+    if (shouldSkipEntry(normPath(e.entryName))) return false;
+    return true;
+  });
+  if (extractable.length > MAX_FILES) {
+    throw new Error(`Too many files in zip (max ${MAX_FILES})`);
+  }
+  const allRawPaths = extractable.map((e) => normPath(e.entryName));
+  const out: Array<{ relativePath: string; data: Buffer }> = [];
+  for (const entry of extractable) {
+    const rawPath = normPath(entry.entryName);
+    const entryPath = stripSingleRootFolder(rawPath, allRawPaths);
+    if (!entryPath || entryPath.includes('..')) continue;
+    const size = entry.header?.size ?? 0;
+    if (size > MAX_SINGLE_FILE_BYTES) continue;
+    const data = entry.getData();
+    if (!Buffer.isBuffer(data)) continue;
+    out.push({ relativePath: entryPath, data });
+  }
+  return out;
 }

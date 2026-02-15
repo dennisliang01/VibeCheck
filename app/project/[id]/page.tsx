@@ -27,10 +27,6 @@ export default function ProjectPage() {
         if (data && !data.error) {
           setProjectName(data.name ?? id);
           setStatus('ready');
-          // Start codeval in background (fire and forget)
-          fetch(`/api/project/${id}/validation/run`, { method: 'POST' }).catch(
-            () => {}
-          );
           return;
         }
       }
@@ -53,10 +49,6 @@ export default function ProjectPage() {
       const postData = await postRes.json();
       setProjectName(postData?.name ?? id);
       setStatus('ready');
-      // Start codeval in background (fire and forget)
-      fetch(`/api/project/${id}/validation/run`, { method: 'POST' }).catch(
-        () => {}
-      );
     }
 
     ensureMap();

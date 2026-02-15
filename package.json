@@ -16,6 +16,7 @@
     "create-test-sample-zip": "node scripts/create-test-sample-zip.js"
   },
   "dependencies": {
+    "@vercel/blob": "^2.2.0",
     "adm-zip": "^0.5.16",
     "next": "14.2.18",
     "react": "^18.3.1",

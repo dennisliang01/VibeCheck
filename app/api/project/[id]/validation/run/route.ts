@@ -18,6 +18,8 @@ function writeStatus(workspaceDir: string, data: ValidationStatus) {
   fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/project/[id]/validation/run
  * Starts codeval in the background. Returns immediately.
@@ -29,6 +31,12 @@ export async function POST(
 ) {
   try {
     const { id: projectId } = await params;
+    if (process.env.VERCEL) {
+      return NextResponse.json(
+        { error: 'Running validation (codeval) is not available on Vercel. Use it locally or in an environment with the Backend.' },
+        { status: 501 }
+      );
+    }
     const workspaceDir = getWorkspaceDir(projectId);
     const projectRoot = process.cwd();
     const backendDir = path.join(projectRoot, 'Backend');

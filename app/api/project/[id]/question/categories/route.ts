@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { loadProjectMap } from '@/lib/storage';
+import { loadProjectMapAsync } from '@/lib/storage';
 import { GENERAL_CATEGORIES, topicToGeneralCategories } from '@/lib/questionCategories';
 
 const MAX_CATEGORIES = 6;
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/project/[id]/question/categories
@@ -14,7 +16,7 @@ export async function GET(
 ) {
   try {
     const { id: projectId } = await params;
-    const projectMap = loadProjectMap(projectId);
+    const projectMap = await loadProjectMapAsync(projectId);
     if (!projectMap) {
       return NextResponse.json(
         { error: 'Build project map first (POST /api/project/[id]/map)' },

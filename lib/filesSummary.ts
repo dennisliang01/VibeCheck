@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FilesSummary } from './llm/types';
 import { getWorkspaceDir } from './workspace';
+import { isBlobStorageAvailable, blobListProjectPaths } from './blobStorage';
 
 export function buildFilesSummary(projectId: string): FilesSummary {
   const root = getWorkspaceDir(projectId);
@@ -40,4 +41,23 @@ export function buildFilesSummary(projectId: string): FilesSummary {
     totalSizeBytes,
     extensions,
   };
+}
+
+export async function buildFilesSummaryAsync(projectId: string): Promise<FilesSummary> {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    const paths = await blobListProjectPaths(projectId);
+    const fileList = paths.filter((p) => p !== 'project_map.json').slice(0, 300);
+    const extensions: Record<string, number> = {};
+    for (const p of fileList) {
+      const ext = path.extname(p) || '.none';
+      extensions[ext] = (extensions[ext] ?? 0) + 1;
+    }
+    return {
+      fileCount: fileList.length,
+      fileList,
+      totalSizeBytes: 0,
+      extensions,
+    };
+  }
+  return buildFilesSummary(projectId);
 }

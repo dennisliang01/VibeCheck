@@ -6,7 +6,7 @@ Short reference for the AI assistant working in this repo.
 
 - **Next.js 14** (App Router) + **TypeScript**. Single-user demo; no auth.
 - **Flow:** User uploads a .zip → files go to `workspaces/<project_id>/` → one-time **project map** is built (discovery + LLM or mock) → **Q/A learn page** (questions, answer, grade, learner model).
-- **Persistence:** File-based. `workspaces/<id>/` (extracted zip + `project_map.json`), `data/learner_model.json`, `data/sessions_<id>.json`.
+- **Persistence:** File-based locally. On **Vercel**, when a Blob store is connected (`BLOB_READ_WRITE_TOKEN`), workspaces and data (project map, learner model, session) are stored in **Vercel Blob** so projects persist across serverless invocations; see `lib/blobStorage.ts`.
 - **LLM:** Interface in `lib/llm/`; **MockLLMClient** by default, **ClaudeLLMClient** when `USE_CLAUDE_LLM=true` and `ANTHROPIC_API_KEY` set.
 
 ## Key directories
@@ -14,7 +14,7 @@ Short reference for the AI assistant working in this repo.
 | Path | Purpose |
 |------|--------|
 | `app/` | Pages and API routes. `app/page.tsx` (home), `app/project/[id]/` (redirect to learn), `app/project/[id]/learn/page.tsx` (Q/A + code viewer), `app/api/` (upload, load-sample, project/[id]/map, question, grade, tree, file, search, session). |
-| `lib/` | Core logic. `schemas.ts` (Zod), `llm/` (types, mock, claude), `workspace.ts` (repo_tree, get_file, search_repo), `storage.ts` (project map, learner model, session), `buildProjectMapSkill.ts` (discovery + key files), `zipExtract.ts`, `filesSummary.ts`. |
+| `lib/` | Core logic. `schemas.ts` (Zod), `llm/` (types, mock, claude), `workspace.ts` (repo_tree, get_file, search_repo; async blob APIs when on Vercel), `blobStorage.ts` (Vercel Blob for workspaces/data), `storage.ts` (project map, learner model, session), `buildProjectMapSkill.ts` (discovery + key files), `zipExtract.ts`, `filesSummary.ts`. |
 | `components/` | Shared UI (e.g. `ToastContext.tsx`). |
 | `examples/` | `sample-src/` and `sample.zip` for demo. |
 
@@ -34,3 +34,8 @@ npm run create-sample-zip   # create examples/sample.zip
 - **Edits:** Prefer **minimal, targeted changes**. Use search-and-replace or small edits; **do not rewrite whole files** unless the task clearly requires it (e.g. new page or major refactor). Preserve existing style and structure when editing.
 - **APIs:** Route handlers in `app/api/` return JSON; use `NextResponse.json()`. Parse request body with the same Zod schemas where applicable.
 - **Styling:** Tailwind. CSS variables in `app/globals.css` (`--bg`, `--card`, `--border`, `--text`, `--muted`, `--accent`, etc.).
+
+## Vercel deployment
+
+- **Persistent projects:** Connect a **Vercel Blob** store to the project (Storage → Create Blob). This sets `BLOB_READ_WRITE_TOKEN`; uploads and project/session data then persist across requests. Without Blob, `/tmp` is used and data is ephemeral (~30s).
+- **Validation run:** `POST /api/project/[id]/validation/run` returns 501 on Vercel (codeval subprocess not supported in serverless). Status and reading an existing report work via Blob when available.

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadSessionHistory } from '@/lib/storage';
+import { loadSessionHistoryAsync } from '@/lib/storage';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: NextRequest,
@@ -7,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id: projectId } = await params;
-    const history = loadSessionHistory(projectId);
+    const history = await loadSessionHistoryAsync(projectId);
     return NextResponse.json(history);
   } catch (e) {
     console.error('Session error:', e);

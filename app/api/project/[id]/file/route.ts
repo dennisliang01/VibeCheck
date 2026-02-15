@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFile } from '@/lib/workspace';
+import { getFileAsync } from '@/lib/workspace';
 import { highlightCode } from '@/lib/highlight';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -15,7 +17,7 @@ export async function GET(
         { status: 400 }
       );
     }
-    const content = getFile(projectId, pathParam);
+    const content = await getFileAsync(projectId, pathParam);
     const highlight = req.nextUrl.searchParams.get('highlight') === '1';
     const themeParam = req.nextUrl.searchParams.get('theme');
     const theme = themeParam === 'light' ? 'light' : 'dark';

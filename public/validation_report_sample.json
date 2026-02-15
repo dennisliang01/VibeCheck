@@ -1,0 +1,31 @@
+{
+  "scores": {
+    "functional": 40,
+    "security": 22,
+    "resilience": 49,
+    "performance": 42,
+    "quality": 48,
+    "dependency": 100,
+    "documentation": 50,
+    "architecture": 85,
+    "concurrency": 44,
+    "api_contract": 76
+  },
+  "feedback": [
+    { "id": "fb-1", "title": "No discoverable entrypoints found in codebase", "severity": "high", "filePath": "src/main.ts", "recommendation": "Add a clear entry point or document how to run the app." },
+    { "id": "fb-2", "title": "Missing input validation on request body", "severity": "high", "filePath": "src/api/handlers.ts", "recommendation": "Add schema validation using Zod or similar." },
+    { "id": "fb-3", "title": "Large function exceeds recommended length", "severity": "medium", "filePath": "src/app.tsx", "recommendation": "Split into smaller functions for testability and maintainability." }
+  ],
+  "sections": [
+    { "id": "functional", "label": "Functional", "score": 40, "details": [{ "file": "src/main.ts", "line": 1, "description": "No discoverable entrypoints found in codebase", "severity": "critical", "suggestion": "Add a clear entry point (e.g. main.ts, index.ts) or document how to run the app." }, { "file": "src/api/handlers.ts", "line": 42, "description": "Missing input validation on request body", "severity": "high", "suggestion": "Add schema validation using Zod or similar." }] },
+    { "id": "security", "label": "Security", "score": 22, "details": [{ "file": "src/utils/format.ts", "line": 12, "description": "User input used without sanitization", "severity": "high", "suggestion": "Validate and sanitize before processing." }] },
+    { "id": "resilience", "label": "Resilience", "score": 49, "details": [{ "file": "src/services/fetch.ts", "line": 33, "description": "Network error not caught", "severity": "high", "suggestion": "Add try/catch and retry logic." }] },
+    { "id": "performance", "label": "Performance", "score": 42, "details": [{ "file": "src/components/List.tsx", "line": 28, "description": "Expensive recomputation on each render", "severity": "medium", "suggestion": "Use React.memo or useMemo." }] },
+    { "id": "quality", "label": "Quality", "score": 48, "details": [{ "file": "src/app.tsx", "line": 28, "description": "Large function exceeds recommended length", "severity": "critical", "suggestion": "Split into smaller functions." }] },
+    { "id": "dependency", "label": "Dependency", "score": 100, "details": [] },
+    { "id": "documentation", "label": "Documentation", "score": 50, "details": [] },
+    { "id": "architecture", "label": "Architecture", "score": 85, "details": [] },
+    { "id": "concurrency", "label": "Concurrency", "score": 44, "details": [] },
+    { "id": "api_contract", "label": "API Contract", "score": 76, "details": [] }
+  ]
+}

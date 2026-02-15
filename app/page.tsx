@@ -66,7 +66,7 @@ export default function HomePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load sample');
       showToast('Sample project loaded', 'success');
-      router.push(`/project/${data.projectId}`);
+      router.push(`/project/${data.projectId}?sample=1`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load sample';
       setError(msg);

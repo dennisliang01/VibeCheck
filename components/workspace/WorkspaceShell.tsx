@@ -139,7 +139,7 @@ function WorkspaceShellInner({ projectId, projectName }: WorkspaceShellProps) {
               tabIndex={0}
               className="flex-1 min-h-0 overflow-y-auto px-6 py-6 w-full"
             >
-              <ValidationPanel projectId={projectId} />
+              <ValidationPanel projectId={projectId} isSample={searchParams.get('sample') === '1'} />
             </div>
           )}
         </div>

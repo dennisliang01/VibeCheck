@@ -2,15 +2,21 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { getWorkspaceDir } from '@/lib/workspace';
-import { ValidationReportSchema } from '@/lib/schemas';
+import { ValidationReportSchema, type ValidationReport } from '@/lib/schemas';
 import { getMockValidationReport } from '@/lib/mockData';
 import { codevalToValidationReport } from '@/lib/codevalReport';
+import { isBlobStorageAvailable, blobGetProjectFileContent } from '@/lib/blobStorage';
+
+export const dynamic = 'force-dynamic';
+
+const DEMO_REPORT_PATH = path.join(process.cwd(), 'examples', 'validation_report_demo.json');
 
 /**
  * GET /api/project/[id]/validation
  * Returns validation scores and feedback.
- * Reads validation_report.json from workspace (codeval output), transforms to UI format.
- * Falls back to mock data if no report exists.
+ * 1. Reads validation_report.json from workspace/Blob if present (from zip or codeval run).
+ * 2. Else loads pre-generated demo report from examples/validation_report_demo.json (for demo / test_sample).
+ * 3. Else returns mock data.
  */
 export async function GET(
   _req: Request,
@@ -18,6 +24,35 @@ export async function GET(
 ) {
   try {
     const { id: projectId } = await params;
+
+    const tryDemoReport = (): ValidationReport | null => {
+      try {
+        if (fs.existsSync(DEMO_REPORT_PATH)) {
+          const raw = fs.readFileSync(DEMO_REPORT_PATH, 'utf-8');
+          const parsed = JSON.parse(raw);
+          const report = codevalToValidationReport(parsed);
+          return ValidationReportSchema.parse(report);
+        }
+      } catch {
+        // ignore
+      }
+      return null;
+    };
+
+    if (process.env.VERCEL && isBlobStorageAvailable()) {
+      try {
+        const raw = await blobGetProjectFileContent(projectId, 'validation_report.json');
+        const parsed = JSON.parse(raw);
+        const report = codevalToValidationReport(parsed);
+        const validated = ValidationReportSchema.parse(report);
+        return NextResponse.json(validated);
+      } catch {
+        // Fall through to demo or mock
+      }
+      const demo = tryDemoReport();
+      if (demo) return NextResponse.json(demo);
+      return NextResponse.json(getMockValidationReport(projectId));
+    }
 
     try {
       const workspaceDir = getWorkspaceDir(projectId);
@@ -28,7 +63,6 @@ export async function GET(
         const parsed = JSON.parse(raw);
         const report = codevalToValidationReport(parsed);
         const validated = ValidationReportSchema.parse(report);
-        // Write debug JSON for troubleshooting
         try {
           fs.writeFileSync(
             debugPath,
@@ -49,17 +83,17 @@ export async function GET(
             'utf-8'
           );
         } catch {
-          // ignore debug write failures
+          // ignore
         }
         return NextResponse.json(validated);
       }
     } catch (e) {
       console.warn('Validation report parse error:', e);
-      // Fall through to mock data
     }
 
-    const report = getMockValidationReport(projectId);
-    return NextResponse.json(report);
+    const demo = tryDemoReport();
+    if (demo) return NextResponse.json(demo);
+    return NextResponse.json(getMockValidationReport(projectId));
   } catch (e) {
     console.error('Validation API error:', e);
     return NextResponse.json(

@@ -31,3 +31,4 @@ Backend/.env
 # cursor
 .cursorrules
 /cursor-rules.md
+.vercel

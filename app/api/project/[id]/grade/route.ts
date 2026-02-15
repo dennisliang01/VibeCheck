@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMClient } from '@/lib/llm';
 import {
-  loadProjectMap,
-  appendSessionEntry,
-  updateLearnerModelFromGrade,
+  loadProjectMapAsync,
+  appendSessionEntryAsync,
+  updateLearnerModelFromGradeAsync,
 } from '@/lib/storage';
 import { QuestionObjSchema } from '@/lib/schemas';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   req: NextRequest,
@@ -17,7 +19,7 @@ export async function POST(
     const questionObj = QuestionObjSchema.parse(body.questionObj);
     const userAnswer = String(body.userAnswer ?? '').trim();
 
-    const projectMap = loadProjectMap(projectId);
+    const projectMap = await loadProjectMapAsync(projectId);
     if (!projectMap) {
       return NextResponse.json(
         { error: 'Project map not found' },
@@ -33,7 +35,7 @@ export async function POST(
     );
 
     const now = new Date().toISOString();
-    appendSessionEntry(projectId, {
+    await appendSessionEntryAsync(projectId, {
       questionId: questionObj.id,
       topicId: questionObj.topicId,
       question: questionObj.question,
@@ -43,7 +45,7 @@ export async function POST(
       answeredAt: now,
     });
 
-    updateLearnerModelFromGrade(questionObj.topicId, grade.score);
+    await updateLearnerModelFromGradeAsync(questionObj.topicId, grade.score);
 
     return NextResponse.json({
       grade,

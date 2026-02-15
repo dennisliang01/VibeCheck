@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMClient } from '@/lib/llm';
-import { loadProjectMap, saveProjectMap } from '@/lib/storage';
-import { buildProjectContext, deriveProjectNameFallback } from '@/lib/buildProjectMapSkill';
+import { loadProjectMapAsync, saveProjectMapAsync } from '@/lib/storage';
+import { buildProjectContextAsync, deriveProjectNameFallbackAsync } from '@/lib/buildProjectMapSkill';
 import { ProjectMapSchema } from '@/lib/schemas';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: NextRequest,
@@ -10,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { id: projectId } = await params;
-    const existing = loadProjectMap(projectId);
+    const existing = await loadProjectMapAsync(projectId);
     if (existing) {
       return NextResponse.json(existing);
     }
@@ -36,23 +38,23 @@ export async function POST(
     const body = await req.json().catch(() => ({}));
     const projectName = (body.name as string) || projectId;
 
-    const existing = loadProjectMap(projectId);
+    const existing = await loadProjectMapAsync(projectId);
     if (existing) {
       return NextResponse.json(existing);
     }
 
-    const context = buildProjectContext(projectId, projectName);
+    const context = await buildProjectContextAsync(projectId, projectName);
     context.projectId = projectId;
     const client = getLLMClient();
     const raw = await client.buildProjectMap(context);
     raw.projectId = projectId;
-    raw.name = deriveProjectNameFallback(
+    raw.name = await deriveProjectNameFallbackAsync(
       projectId,
       context.fileList ?? [],
       raw.name ?? ''
     );
     const map = ProjectMapSchema.parse(raw);
-    saveProjectMap(projectId, map);
+    await saveProjectMapAsync(projectId, map);
 
     return NextResponse.json(map);
   } catch (e) {

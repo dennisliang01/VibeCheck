@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import type { TreeNode } from './workspace';
-import { repoTree, searchRepo, getFile, getWorkspaceDir } from './workspace';
-import { buildFilesSummary } from './filesSummary';
+import { repoTree, searchRepo, getFile, getWorkspaceDir, getFileAsync, repoTreeAsync, searchRepoAsync } from './workspace';
+import { buildFilesSummary, buildFilesSummaryAsync } from './filesSummary';
 import type { ProjectContext } from './llm/types';
+import { isBlobStorageAvailable } from './blobStorage';
 
 /** Check if LLM name looks descriptive (not an ID). */
 function isDescriptiveName(name: string, projectId: string): boolean {
@@ -52,6 +53,37 @@ export function deriveProjectNameFallback(
   }
 
   return projectId;
+}
+
+export async function deriveProjectNameFallbackAsync(
+  projectId: string,
+  fileList: string[],
+  llmName: string
+): Promise<string> {
+  if (isDescriptiveName(llmName, projectId)) return llmName;
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    const pkgRel = fileList.find((f) => f === 'package.json' || f.endsWith('/package.json'));
+    if (pkgRel) {
+      try {
+        const raw = await getFileAsync(projectId, pkgRel);
+        const pkg = JSON.parse(raw);
+        const n = pkg?.name;
+        if (typeof n === 'string' && isDescriptiveName(n, projectId)) return n;
+      } catch {
+        /* ignore */
+      }
+    }
+    const top = fileList
+      .map((f) => f.split('/')[0])
+      .filter((d) => d && !d.startsWith('.'));
+    if (top.length > 0) {
+      const slug = top[0];
+      if (isDescriptiveName(slug, projectId))
+        return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+    return projectId;
+  }
+  return deriveProjectNameFallback(projectId, fileList, llmName);
 }
 
 // Set number of key files to 6 to limit the context window for the LLM
@@ -158,6 +190,53 @@ export function discoverKeyFilePaths(projectId: string): string[] {
   return Array.from(picked).slice(0, MAX_KEY_FILES);
 }
 
+export async function discoverKeyFilePathsAsync(projectId: string): Promise<string[]> {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    const tree = await repoTreeAsync(projectId);
+    const allPaths = flattenTreeToPaths(tree, '', true);
+    const filesSummary = await buildFilesSummaryAsync(projectId);
+    const fileList = filesSummary.fileList.length > 0 ? filesSummary.fileList : allPaths;
+    const searchQueries = ['README', 'main', 'entry', 'index', 'route', 'router', 'api', 'database', 'schema', 'model', 'auth', 'login'];
+    const fromSearch = new Set<string>();
+    for (const q of searchQueries) {
+      const results = await searchRepoAsync(projectId, q);
+      for (const r of results) fromSearch.add(r.path);
+    }
+    const combined = fileList.concat(Array.from(fromSearch));
+    const readme = combined.filter(isReadme)[0];
+    const entrypoints = combined.filter(isEntrypoint);
+    const routes = combined.filter(isRoute);
+    const data = combined.filter(isDataOrSchema);
+    const auth = combined.filter(isAuth);
+    const picked = new Set<string>();
+    if (readme) picked.add(readme);
+    for (const p of entrypoints) {
+      if (picked.size >= MAX_KEY_FILES) break;
+      if (!picked.has(p)) picked.add(p);
+    }
+    for (const p of routes) {
+      if (picked.size >= MAX_KEY_FILES) break;
+      if (!picked.has(p)) picked.add(p);
+    }
+    for (const p of data) {
+      if (picked.size >= MAX_KEY_FILES) break;
+      if (!picked.has(p)) picked.add(p);
+    }
+    for (const p of auth) {
+      if (picked.size >= MAX_KEY_FILES) break;
+      if (!picked.has(p)) picked.add(p);
+    }
+    const coreCandidates = fileList.filter(
+      (p) =>
+        !picked.has(p) &&
+        (p.includes('/lib/') || p.includes('/libs/') || p.includes('/components/') || p.includes('/app/') || p.includes('/core/'))
+    );
+    if (picked.size < MAX_KEY_FILES && coreCandidates[0]) picked.add(coreCandidates[0]);
+    return Array.from(picked).slice(0, MAX_KEY_FILES);
+  }
+  return discoverKeyFilePaths(projectId);
+}
+
 /**
  * Read key files and return path + content (truncated).
  */
@@ -181,6 +260,29 @@ export function readKeyFiles(
   return out;
 }
 
+export async function readKeyFilesAsync(
+  projectId: string,
+  paths: string[],
+  maxCharsPerFile = MAX_CHARS_PER_FILE
+): Promise<Array<{ path: string; content: string }>> {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    const out: Array<{ path: string; content: string }> = [];
+    for (const p of paths) {
+      try {
+        let content = await getFileAsync(projectId, p);
+        if (content.length > maxCharsPerFile) {
+          content = content.slice(0, maxCharsPerFile) + '\n\n... (truncated)';
+        }
+        out.push({ path: p, content });
+      } catch {
+        // skip
+      }
+    }
+    return out;
+  }
+  return readKeyFiles(projectId, paths, maxCharsPerFile);
+}
+
 /**
  * Build full project context: files summary + discovered key file paths + read contents.
  * Use this before calling LLM buildProjectMap.
@@ -193,6 +295,24 @@ export function buildProjectContext(
   const keyPaths = discoverKeyFilePaths(projectId);
   const keyFiles = readKeyFiles(projectId, keyPaths);
 
+  return {
+    projectId,
+    name: projectName || projectId,
+    fileCount: filesSummary.fileCount,
+    fileList: filesSummary.fileList,
+    totalSizeBytes: filesSummary.totalSizeBytes,
+    extensions: filesSummary.extensions,
+    keyFiles: keyFiles.length > 0 ? keyFiles : undefined,
+  };
+}
+
+export async function buildProjectContextAsync(
+  projectId: string,
+  projectName?: string
+): Promise<ProjectContext> {
+  const filesSummary = await buildFilesSummaryAsync(projectId);
+  const keyPaths = await discoverKeyFilePathsAsync(projectId);
+  const keyFiles = await readKeyFilesAsync(projectId, keyPaths);
   return {
     projectId,
     name: projectName || projectId,

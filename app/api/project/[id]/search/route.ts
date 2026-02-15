@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchRepo } from '@/lib/workspace';
+import { searchRepoAsync } from '@/lib/workspace';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -14,7 +16,7 @@ export async function GET(
         { status: 400 }
       );
     }
-    const results = searchRepo(projectId, query);
+    const results = await searchRepoAsync(projectId, query);
     return NextResponse.json({ results });
   } catch (e) {
     console.error('Search error:', e);

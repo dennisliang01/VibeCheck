@@ -1,5 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import {
+  isBlobStorageAvailable,
+  blobGetProjectFileContent,
+  blobListProjectPaths,
+  blobProjectExists,
+} from './blobStorage';
 
 /** On Vercel, process.cwd() is read-only; use /tmp for writable workspace and data dirs. */
 export function getWorkspacesDirPath(): string {
@@ -13,6 +19,9 @@ function getDataDirPath(): string {
 const MAX_FILES_FOR_SEARCH = 500;
 
 export function getWorkspaceDir(projectId: string): string {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    throw new Error(`Project not found: ${projectId}`);
+  }
   const dir = path.join(getWorkspacesDirPath(), projectId);
   if (!fs.existsSync(dir)) {
     throw new Error(`Project not found: ${projectId}`);
@@ -64,8 +73,9 @@ export function repoTree(projectId: string): TreeNode {
     const dirs: TreeNode[] = [];
     const files: TreeNode[] = [];
 
+    const skipNames = new Set(['project_map.json', 'validation_report.json', 'validation_status.json', 'validation_debug.json']);
     for (const ent of entries) {
-      if (ent.name === 'project_map.json') continue;
+      if (skipNames.has(ent.name)) continue;
       const rel = relativePath ? `${relativePath}/${ent.name}` : ent.name;
       if (ent.isDirectory()) {
         dirs.push(walk(path.join(dir, ent.name), rel, fileCount));
@@ -147,4 +157,86 @@ export function searchRepo(projectId: string, query: string): Array<{ path: stri
 
   scan(root, '');
   return results.slice(0, 100);
+}
+
+// ---------- Async APIs for Vercel Blob (persistent storage) ----------
+
+function pathsToTree(paths: string[], rootName: string): TreeNode {
+  const root: TreeNode = { name: rootName, path: '', isFile: false, children: [] };
+  const seen = new Map<string, TreeNode>();
+  seen.set('', root);
+
+  const skipBasenames = new Set(['project_map.json', 'validation_report.json', 'validation_status.json', 'validation_debug.json']);
+  for (const p of paths) {
+    if (!p) continue;
+    const base = p.replace(/\\/g, '/').split('/').pop() ?? '';
+    if (skipBasenames.has(base)) continue;
+    const parts = p.replace(/\\/g, '/').split('/').filter(Boolean);
+    let prefix = '';
+    for (let i = 0; i < parts.length; i++) {
+      const isFile = i === parts.length - 1;
+      const seg = parts[i];
+      const key = prefix ? `${prefix}/${seg}` : seg;
+      if (seen.has(key)) continue;
+      const parentKey = prefix;
+      const parent = seen.get(parentKey) ?? root;
+      const node: TreeNode = {
+        name: seg,
+        path: key,
+        isFile,
+        children: isFile ? undefined : [],
+      };
+      seen.set(key, node);
+      if (parent.children) parent.children.push(node);
+      prefix = key;
+    }
+  }
+  return root;
+}
+
+export async function getFileAsync(projectId: string, filePath: string): Promise<string> {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    return blobGetProjectFileContent(projectId, filePath);
+  }
+  return getFile(projectId, filePath);
+}
+
+export async function repoTreeAsync(projectId: string): Promise<TreeNode> {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    const exists = await blobProjectExists(projectId);
+    if (!exists) throw new Error(`Project not found: ${projectId}`);
+    const paths = await blobListProjectPaths(projectId);
+    return pathsToTree(paths, projectId);
+  }
+  return repoTree(projectId);
+}
+
+const MAX_FILES_SEARCH_BLOB = 100;
+
+export async function searchRepoAsync(
+  projectId: string,
+  query: string
+): Promise<Array<{ path: string; line: number; snippet: string }>> {
+  if (process.env.VERCEL && isBlobStorageAvailable()) {
+    const paths = await blobListProjectPaths(projectId);
+    const q = query.toLowerCase();
+    const results: Array<{ path: string; line: number; snippet: string }> = [];
+    const toScan = paths.filter((p) => !p.includes('node_modules') && !p.includes('.git')).slice(0, MAX_FILES_SEARCH_BLOB);
+    for (const rel of toScan) {
+      try {
+        const content = await blobGetProjectFileContent(projectId, rel);
+        const lines = content.split(/\r?\n/);
+        lines.forEach((line, i) => {
+          if (line.toLowerCase().includes(q)) {
+            results.push({ path: rel, line: i + 1, snippet: line.trim().slice(0, 120) });
+          }
+        });
+      } catch {
+        // skip
+      }
+      if (results.length >= 100) break;
+    }
+    return results.slice(0, 100);
+  }
+  return searchRepo(projectId, query);
 }

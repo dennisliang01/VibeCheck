@@ -9,6 +9,8 @@ type ValidationStatus = 'idle' | 'running' | 'done' | 'error';
 
 interface ValidationPanelProps {
   projectId: string;
+  /** When true, load validation from static /validation_report_sample.json (no API call). */
+  isSample?: boolean;
 }
 
 function severityColor(severity?: string): string {
@@ -105,7 +107,7 @@ function buildSectionsFromLegacy(report: ValidationReport): ValidationSection[] 
 
 const POLL_MS = 2000;
 
-export function ValidationPanel({ projectId }: ValidationPanelProps) {
+export function ValidationPanel({ projectId, isSample = false }: ValidationPanelProps) {
   const { onOpenCode } = useWorkspace();
   const [data, setData] = useState<ValidationReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,18 @@ export function ValidationPanel({ projectId }: ValidationPanelProps) {
   }, [projectId]);
 
   useEffect(() => {
+    if (isSample) {
+      setLoading(true);
+      fetch('/api/sample-validation')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((d) => {
+          if (d) setData(d);
+          setStatus('done');
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -155,11 +169,11 @@ export function ValidationPanel({ projectId }: ValidationPanelProps) {
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [projectId, fetchReport]);
+  }, [projectId, isSample, fetchReport]);
 
   useEffect(() => {
-    if (status === 'done' && !data) fetchReport();
-  }, [status, data, fetchReport]);
+    if (!isSample && status === 'done' && !data) fetchReport();
+  }, [isSample, status, data, fetchReport]);
 
   if (loading && status !== 'running') {
     return <p className="text-[var(--muted)]">Loading validation…</p>;
