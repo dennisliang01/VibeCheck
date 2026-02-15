@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'vibecheck-theme';
+const STORAGE_KEY = 'viberight-theme';
 
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'dark';

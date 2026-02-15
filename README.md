@@ -1,4 +1,4 @@
-# VibeCheck
+# VibeRight
 
 A lightweight hackathon MVP: upload a project (zip), build a **Project Map** once, then run a **Q/A loop**—answer code-understanding questions, get graded with feedback, and see your learner model update. Single-user demo, no auth.
 

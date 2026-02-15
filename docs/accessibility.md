@@ -1,6 +1,6 @@
 # Accessibility (WCAG 2.1 AA baseline)
 
-This document describes the accessibility measures implemented in VibeCheck and how to test them.
+This document describes the accessibility measures implemented in VibeRight and how to test them.
 
 ## WCAG 2.1 AA items addressed
 

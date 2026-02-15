@@ -68,7 +68,7 @@ export default function HomePage() {
       <section className="flex flex-col justify-center py-16 min-h-[calc(100vh-4rem)]">
         <div className="text-center">
           <h1 className="hero-title-start text-4xl font-semibold text-[var(--text)] tracking-tight">
-            VibeCheck
+            VibeRight
           </h1>
           <p className="hero-subtitle-start mt-2 text-[var(--muted)]">
             Know your system. Ship with confidence.

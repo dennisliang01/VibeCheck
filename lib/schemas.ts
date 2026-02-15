@@ -93,11 +93,32 @@ export const ValidationFeedbackItemSchema = z.object({
   recommendation: z.string(),
 });
 
+/** A single finding within a section (file:line to pay attention to). */
+export const ValidationSectionDetailSchema = z.object({
+  file: z.string(),
+  line: z.number().optional(),
+  description: z.string(),
+  severity: z.enum(['critical', 'high', 'medium', 'low']).optional(),
+  suggestion: z.string().optional(),
+});
+
+/** One of 8 validation sections with score and expandable details. */
+export const ValidationSectionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  score: z.number().min(0).max(100),
+  details: z.array(ValidationSectionDetailSchema).default([]),
+});
+
 export const ValidationReportSchema = z.object({
-  scores: ValidationScoresSchema,
-  feedback: z.array(ValidationFeedbackItemSchema),
+  scores: ValidationScoresSchema.optional(),
+  feedback: z.array(ValidationFeedbackItemSchema).optional(),
+  /** 8 sections: functional, logic, architecture, technical_debt, performance, security, observability, resilience */
+  sections: z.array(ValidationSectionSchema).optional(),
 });
 
 export type ValidationScores = z.infer<typeof ValidationScoresSchema>;
 export type ValidationFeedbackItem = z.infer<typeof ValidationFeedbackItemSchema>;
+export type ValidationSectionDetail = z.infer<typeof ValidationSectionDetailSchema>;
+export type ValidationSection = z.infer<typeof ValidationSectionSchema>;
 export type ValidationReport = z.infer<typeof ValidationReportSchema>;

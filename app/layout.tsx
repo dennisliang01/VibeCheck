@@ -6,13 +6,13 @@ import { HomeNavLink } from '@/components/HomeNavLink';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'VibeCheck',
+  title: 'VibeRight',
   description: 'Learn by answering code-understanding questions on your project',
 };
 
 const themeScript = `
 (function() {
-  var s = localStorage.getItem('vibecheck-theme');
+  var s = localStorage.getItem('viberight-theme');
   var p = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches;
   document.documentElement.setAttribute('data-theme', s === 'light' || (!s && p) ? 'light' : 'dark');
 })();
@@ -40,7 +40,7 @@ export default function RootLayout({
                 href="/"
                 className="text-base font-medium text-[var(--text)] hover:text-[var(--accent)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
               >
-                VibeCheck
+                VibeRight
               </a>
               <div className="flex items-center gap-2">
                 <HomeNavLink />

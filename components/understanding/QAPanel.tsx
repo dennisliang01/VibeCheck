@@ -80,11 +80,10 @@ export function QAPanel({
   const [error, setError] = useState<string | null>(null);
   const answerErrorRef = useRef<HTMLParagraphElement>(null);
   const answerInputRef = useRef<HTMLTextAreaElement>(null);
+  const selectedFilePathRef = useRef(selectedFilePath);
+  selectedFilePathRef.current = selectedFilePath;
 
   const fetchQuestion = useCallback(async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/45c7ea39-0dd0-47c8-bfb5-fbb1c8ff0374',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QAPanel.tsx:fetchQuestion',message:'fetchQuestion called',data:{projectId},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     setError(null);
     setLoadingQuestion(true);
     setLastGrade(null);
@@ -94,10 +93,7 @@ export function QAPanel({
       if (!res.ok) throw new Error(data.error || 'Failed to load question');
       setQuestion(data);
       setAnswer('');
-      if (data.fileHints?.[0] && !selectedFilePath) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/45c7ea39-0dd0-47c8-bfb5-fbb1c8ff0374',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QAPanel.tsx:fileHints',message:'Auto-open fileHints (selectedFilePath was empty)',data:{fileHint:data.fileHints[0],selectedFilePath,runId:'post-fix'},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
+      if (data.fileHints?.[0] && !selectedFilePathRef.current) {
         onSelectedFilePathChange(data.fileHints[0]);
       }
     } catch (e) {
@@ -107,7 +103,7 @@ export function QAPanel({
     } finally {
       setLoadingQuestion(false);
     }
-  }, [projectId, showToast, onSelectedFilePathChange, selectedFilePath]);
+  }, [projectId, showToast, onSelectedFilePathChange]);
 
   useEffect(() => {
     fetchQuestion();
@@ -177,7 +173,7 @@ export function QAPanel({
               {question.hint && <HintReveal hint={question.hint} />}
 
               {!lastGrade ? (
-                <form onSubmit={submitAnswer} className="mt-6 max-w-xl space-y-4">
+                <form onSubmit={submitAnswer} className="mt-6 w-full max-w-xl lg:max-w-none space-y-4">
                   <label htmlFor="answer-input" className="sr-only">
                     Your answer
                   </label>
@@ -191,7 +187,7 @@ export function QAPanel({
                     aria-describedby={error ? 'answer-error' : undefined}
                     className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--bg)] px-4 py-3 font-mono text-sm focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
                   />
-                  <div className="flex justify-start">
+                  <div className="flex justify-end">
                     <button
                       type="submit"
                       disabled={grading}
@@ -202,7 +198,7 @@ export function QAPanel({
                   </div>
                 </form>
               ) : (
-                <div className="mt-6 max-w-xl space-y-4">
+                <div className="mt-6 w-full max-w-xl lg:max-w-none space-y-4">
                   <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4">
                     <p className="mb-2">
                       <span className="font-medium">Score: </span>
@@ -232,7 +228,7 @@ export function QAPanel({
                       </ul>
                     )}
                   </div>
-                  <div className="flex justify-start">
+                  <div className="flex justify-end">
                     <button
                       type="button"
                       onClick={fetchQuestion}
