@@ -122,11 +122,12 @@ export function discoverKeyFilePaths(projectId: string): string[] {
     }
   }
 
-  const readme = [...fileList, ...fromSearch].filter(isReadme)[0];
-  const entrypoints = [...fileList, ...fromSearch].filter(isEntrypoint);
-  const routes = [...fileList, ...fromSearch].filter(isRoute);
-  const data = [...fileList, ...fromSearch].filter(isDataOrSchema);
-  const auth = [...fileList, ...fromSearch].filter(isAuth);
+  const combined = fileList.concat(Array.from(fromSearch));
+  const readme = combined.filter(isReadme)[0];
+  const entrypoints = combined.filter(isEntrypoint);
+  const routes = combined.filter(isRoute);
+  const data = combined.filter(isDataOrSchema);
+  const auth = combined.filter(isAuth);
 
   const picked = new Set<string>();
   if (readme) picked.add(readme);
