@@ -12,6 +12,12 @@
   --accent-hover: #2dd4bf;
   --success: #22c55e;
   --error: #f43f5e;
+  --category-ui: #3b82f6;
+  --category-functionality: #14b8a6;
+  --category-performance: #22c55e;
+  --category-data: #a855f7;
+  --category-security: #f97316;
+  --category-general: #8b95a5;
 }
 
 [data-theme="light"] {
@@ -24,6 +30,12 @@
   --accent-hover: #0f766e;
   --success: #16a34a;
   --error: #dc2626;
+  --category-ui: #2563eb;
+  --category-functionality: #0d9488;
+  --category-performance: #16a34a;
+  --category-data: #9333ea;
+  --category-security: #ea580c;
+  --category-general: #5c6370;
 }
 
 body {
@@ -112,6 +124,32 @@ body {
 .hero-block-start {
   opacity: 0;
   animation: heroBlockIn 0.6s 0.35s ease-out forwards;
+}
+
+/* Progress bar */
+@keyframes progressIndeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.progress-bar-indeterminate {
+  overflow: hidden;
+  background: var(--border);
+  border-radius: 9999px;
+}
+
+.progress-bar-indeterminate::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 25%;
+  background: var(--accent);
+  border-radius: 9999px;
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
 }
 
 /* Respect prefers-reduced-motion (WCAG 2.1) */

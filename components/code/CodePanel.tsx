@@ -14,7 +14,7 @@ interface TreeNode {
   isFile: boolean;
 }
 
-interface CodePanelProps {
+export interface CodePanelProps {
   projectId: string;
   selectedPath: string | null;
   onPathChange: (path: string | null) => void;
@@ -110,7 +110,6 @@ export function CodePanel({
           </FileSelectionContext.Provider>
         </div>
       </section>
-      {/* Resizer - mouse-only; keyboard users collapse/expand via toolbar. See docs/accessibility.md */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <div
         role="separator"
@@ -246,25 +245,40 @@ function FileViewer({ projectId }: { projectId: string }) {
   const { selectedPath } = useContext(FileSelectionContext);
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedPath) {
       setContent(null);
+      setError(null);
       return;
     }
     setLoading(true);
+    setError(null);
     fetch(`/api/project/${projectId}/file?path=${encodeURIComponent(selectedPath)}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setContent(data?.content ?? null);
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data?.error || !data?.content) {
+          setError(data?.error || 'File not found');
+          setContent(null);
+        } else {
+          setContent(data.content);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        setError('Could not load file');
+        setContent(null);
       })
       .finally(() => setLoading(false));
   }, [projectId, selectedPath]);
 
   if (!selectedPath) {
     return (
-      <div className="flex flex-1 items-center justify-center text-[11px] text-[var(--muted)] opacity-80">
-        Select a file
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
+        <p className="text-[11px] text-[var(--muted)] opacity-80">
+          Select a file from the tree
+        </p>
       </div>
     );
   }
@@ -273,6 +287,17 @@ function FileViewer({ projectId }: { projectId: string }) {
     return (
       <div className="flex flex-1 items-center justify-center text-[11px] text-[var(--muted)]">
         …
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
+        <p className="text-[11px] text-[var(--error)]">{error}</p>
+        <p className="text-[10px] text-[var(--muted)] truncate max-w-full">
+          {selectedPath}
+        </p>
       </div>
     );
   }

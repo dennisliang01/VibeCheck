@@ -35,7 +35,7 @@ export function Tabs({ value, onChange, tabs }: TabsProps) {
       ref={tabListRef}
       role="tablist"
       aria-label="Project workspace tabs"
-      className="flex items-center gap-1"
+      className="flex items-end gap-0"
     >
       {tabs.map((tab, index) => (
         <button
@@ -48,10 +48,10 @@ export function Tabs({ value, onChange, tabs }: TabsProps) {
           tabIndex={value === tab.id ? 0 : -1}
           onClick={() => onChange(tab.id)}
           onKeyDown={(e) => handleKeyDown(e, index)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] ${
+          className={`relative px-5 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded-t-md border border-b-0 border-[var(--border)] ${
             value === tab.id
-              ? 'bg-[var(--accent)] text-white'
-              : 'text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--text)]'
+              ? 'bg-[var(--card)] text-[var(--text)] -mb-px z-10'
+              : 'bg-[var(--border)]/50 text-[var(--muted)] hover:bg-[var(--border)]/70 hover:text-[var(--text)]'
           }`}
         >
           {tab.label}

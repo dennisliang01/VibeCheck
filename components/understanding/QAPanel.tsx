@@ -7,9 +7,31 @@ interface QuestionObj {
   id: string;
   topicId: string;
   category?: string;
+  categories?: string[];
   question: string;
   hint?: string;
   fileHints?: string[];
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  'UI': 'var(--category-ui)',
+  'Functionality': 'var(--category-functionality)',
+  'Performance': 'var(--category-performance)',
+  'Data & state': 'var(--category-data)',
+  'Security': 'var(--category-security)',
+  'General': 'var(--category-general)',
+};
+
+function CategoryBadge({ category }: { category: string }) {
+  const bg = CATEGORY_COLORS[category] ?? 'var(--category-general)';
+  return (
+    <span
+      className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-white"
+      style={{ backgroundColor: bg }}
+    >
+      {category}
+    </span>
+  );
 }
 
 interface GradeObj {
@@ -130,13 +152,17 @@ export function QAPanel({
             <p className="text-[var(--muted)]">Loading question…</p>
           ) : question ? (
             <>
-              {question.category && (
-                <p className="mb-3">
-                  <span className="inline-flex items-center rounded-md bg-[var(--card)] border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">
-                    {question.category}
-                  </span>
-                </p>
-              )}
+              {(() => {
+                const cats = question.categories ?? (question.category ? [question.category] : []);
+                if (cats.length === 0) return null;
+                return (
+                  <p className="mb-3 flex flex-wrap gap-2">
+                    {cats.map((cat) => (
+                      <CategoryBadge key={cat} category={cat} />
+                    ))}
+                  </p>
+                );
+              })()}
               <p className="whitespace-pre-wrap text-base leading-relaxed text-[var(--text)] md:text-lg">
                 {question.question}
               </p>

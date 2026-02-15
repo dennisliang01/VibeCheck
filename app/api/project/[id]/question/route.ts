@@ -6,17 +6,19 @@ import type { ProjectMapTopic } from '@/lib/schemas';
 const CATEGORIES = ['UI', 'Functionality', 'Performance', 'Data & state', 'Security', 'General'] as const;
 export type QuestionCategory = (typeof CATEGORIES)[number];
 
-/** Map project topic to a high-level category (UI, Functionality, Performance, etc.). */
-function topicToCategory(topic: ProjectMapTopic | null, topicId: string): QuestionCategory {
+/** Map project topic to one or more categories. A topic can match multiple categories. */
+function topicToCategories(topic: ProjectMapTopic | null, topicId: string): QuestionCategory[] {
   const text = topic
     ? `${topic.title} ${topic.description} ${topic.id}`.toLowerCase()
     : topicId.toLowerCase();
-  if (/\b(ui|component|layout|view|render|style|css)\b/.test(text)) return 'UI';
-  if (/\b(performance|optim|speed|memory|cache)\b/.test(text)) return 'Performance';
-  if (/\b(data|state|schema|model|store|database|api)\b/.test(text)) return 'Data & state';
-  if (/\b(auth|security|login|permission|token)\b/.test(text)) return 'Security';
-  if (/\b(entry|setup|route|flow|logic|function|handler)\b/.test(text)) return 'Functionality';
-  return 'General';
+  const matches: QuestionCategory[] = [];
+  if (/\b(ui|component|layout|view|render|style|css)\b/.test(text)) matches.push('UI');
+  if (/\b(performance|optim|speed|memory|cache)\b/.test(text)) matches.push('Performance');
+  if (/\b(data|state|schema|model|store|database|api)\b/.test(text)) matches.push('Data & state');
+  if (/\b(auth|security|login|permission|token)\b/.test(text)) matches.push('Security');
+  if (/\b(entry|setup|route|flow|logic|function|handler)\b/.test(text)) matches.push('Functionality');
+  if (matches.length === 0) matches.push('General');
+  return matches;
 }
 
 export async function GET(
@@ -41,9 +43,9 @@ export async function GET(
       history.entries
     );
     const topic = projectMap.topics.find((t) => t.id === question.topicId) ?? null;
-    const category = topicToCategory(topic, question.topicId);
+    const categories = topicToCategories(topic, question.topicId);
     const fileHints = topic?.fileHints;
-    return NextResponse.json({ ...question, category, fileHints });
+    return NextResponse.json({ ...question, categories, fileHints });
   } catch (e) {
     console.error('Generate question error:', e);
     return NextResponse.json(

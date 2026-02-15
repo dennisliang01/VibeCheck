@@ -6,7 +6,7 @@ interface FeedbackCardProps {
   severity: string;
   filePath?: string;
   recommendation: string;
-  onJumpToFile?: (path: string) => void;
+  onOpenCode?: (path: string) => void;
 }
 
 export function FeedbackCard({
@@ -14,7 +14,7 @@ export function FeedbackCard({
   severity,
   filePath,
   recommendation,
-  onJumpToFile,
+  onOpenCode,
 }: FeedbackCardProps) {
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
@@ -31,13 +31,14 @@ export function FeedbackCard({
           )}
           <p className="mt-2 text-sm text-[var(--text)]">{recommendation}</p>
         </div>
-        {filePath && onJumpToFile && (
+        {filePath && onOpenCode && (
           <button
             type="button"
-            onClick={() => onJumpToFile(filePath)}
+            onClick={() => onOpenCode(filePath)}
             className="shrink-0 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--accent)] hover:bg-[var(--accent)] hover:bg-opacity-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+            aria-label={`Open ${filePath} in code panel`}
           >
-            Jump to file
+            Open code
           </button>
         )}
       </div>

@@ -12,10 +12,10 @@ interface FeedbackItem {
 
 interface FeedbackListProps {
   feedback: FeedbackItem[];
-  onJumpToFile?: (path: string) => void;
+  onOpenCode?: (path: string) => void;
 }
 
-export function FeedbackList({ feedback, onJumpToFile }: FeedbackListProps) {
+export function FeedbackList({ feedback, onOpenCode }: FeedbackListProps) {
   return (
     <div>
       <h2 className="text-sm font-medium text-[var(--text)] mb-3">
@@ -30,7 +30,7 @@ export function FeedbackList({ feedback, onJumpToFile }: FeedbackListProps) {
             severity={item.severity}
             filePath={item.filePath}
             recommendation={item.recommendation}
-            onJumpToFile={item.filePath ? onJumpToFile : undefined}
+            onOpenCode={item.filePath ? onOpenCode : undefined}
           />
         ))}
       </div>

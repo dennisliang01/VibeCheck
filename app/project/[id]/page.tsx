@@ -80,8 +80,16 @@ export default function ProjectPage() {
 
   if (status !== 'ready') {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-16">
+      <div className="flex flex-col items-center justify-center gap-6 py-16 px-6 max-w-md mx-auto">
         <h1 className="sr-only">Project</h1>
+        <div className="w-full">
+          <div
+            className="progress-bar-indeterminate h-1.5 w-full"
+            role="progressbar"
+            aria-valuetext={status === 'building' ? 'Building project map' : 'Opening project'}
+            aria-label={status === 'building' ? 'Building project map' : 'Opening project'}
+          />
+        </div>
         <p className="text-sm text-[var(--muted)]">
           {status === 'building' ? 'Building project map…' : 'Opening project…'}
         </p>
@@ -98,8 +106,14 @@ export default function ProjectPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center py-16">
-          <p className="text-sm text-[var(--muted)]">Loading…</p>
+        <div className="flex flex-col items-center justify-center gap-6 py-16 px-6 max-w-md mx-auto">
+          <div
+            className="progress-bar-indeterminate h-1.5 w-full"
+            role="progressbar"
+            aria-valuetext="Loading workspace"
+            aria-label="Loading workspace"
+          />
+          <p className="text-sm text-[var(--muted)]">Loading workspace…</p>
         </div>
       }
     >
