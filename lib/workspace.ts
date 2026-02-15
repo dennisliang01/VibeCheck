@@ -7,9 +7,12 @@ import {
   blobProjectExists,
 } from './blobStorage';
 
-/** On Vercel/Netlify, process.cwd() is read-only; use /tmp for writable workspace and data dirs. */
+/** On Vercel/Netlify/Lambda, process.cwd() is read-only; use /tmp for writable workspace and data dirs. */
 function isReadOnlyFs(): boolean {
-  return !!(process.env.VERCEL || process.env.NETLIFY);
+  if (process.env.VERCEL || process.env.NETLIFY) return true;
+  // Netlify/Lambda serverless may not set NETLIFY in runtime; cwd is /var/task and read-only
+  const cwd = process.cwd();
+  return cwd === '/var/task' || cwd.startsWith('/var/task/');
 }
 
 export function getWorkspacesDirPath(): string {
