@@ -327,7 +327,7 @@ def run(
     include: str | None = typer.Option(None, "--include", help="Include glob pattern"),
     exclude: str | None = typer.Option(None, "--exclude", help="Exclude glob pattern"),
     llm: str = typer.Option("auto", "--llm", help="LLM: on, off, or auto (use if key present)"),
-    concurrency: int = typer.Option(3, "--concurrency", "-c", help="Max concurrent LLM calls (default: 3)"),
+    concurrency: int = typer.Option(10, "--concurrency", "-c", help="Max concurrent LLM calls (default: 10, all agents in parallel)"),
 ) -> None:
     """Run code validation on a repository."""
     if not path.exists():

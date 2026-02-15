@@ -77,13 +77,36 @@ export const SessionHistorySchema = z.object({
 export type SessionHistory = z.infer<typeof SessionHistorySchema>;
 export type SessionEntry = z.infer<typeof SessionEntrySchema>;
 
-// ----- Validation (for Python backend integration) -----
-export const ValidationScoresSchema = z.object({
-  performance: z.number().min(0).max(100),
-  security: z.number().min(0).max(100),
-  codeQuality: z.number().min(0).max(100),
-  architecture: z.number().min(0).max(100),
-});
+// ----- Validation (codeval categories) -----
+export const CODEVAL_CATEGORIES = [
+  'functional',
+  'security',
+  'resilience',
+  'performance',
+  'quality',
+  'dependency',
+  'documentation',
+  'architecture',
+  'concurrency',
+  'api_contract',
+] as const;
+
+export const ValidationScoresSchema = z
+  .object({
+    functional: z.number().min(0).max(100).optional(),
+    security: z.number().min(0).max(100).optional(),
+    resilience: z.number().min(0).max(100).optional(),
+    performance: z.number().min(0).max(100).optional(),
+    quality: z.number().min(0).max(100).optional(),
+    dependency: z.number().min(0).max(100).optional(),
+    documentation: z.number().min(0).max(100).optional(),
+    architecture: z.number().min(0).max(100).optional(),
+    concurrency: z.number().min(0).max(100).optional(),
+    api_contract: z.number().min(0).max(100).optional(),
+    // Legacy (kept for backward compat)
+    codeQuality: z.number().min(0).max(100).optional(),
+  })
+  .passthrough();
 
 export const ValidationFeedbackItemSchema = z.object({
   id: z.string(),
@@ -102,7 +125,7 @@ export const ValidationSectionDetailSchema = z.object({
   suggestion: z.string().optional(),
 });
 
-/** One of 8 validation sections with score and expandable details. */
+/** Validation section per codeval category. */
 export const ValidationSectionSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -113,7 +136,7 @@ export const ValidationSectionSchema = z.object({
 export const ValidationReportSchema = z.object({
   scores: ValidationScoresSchema.optional(),
   feedback: z.array(ValidationFeedbackItemSchema).optional(),
-  /** 8 sections: functional, logic, architecture, technical_debt, performance, security, observability, resilience */
+  /** Sections: functional, security, resilience, performance, quality, dependency, documentation, architecture, concurrency, api_contract */
   sections: z.array(ValidationSectionSchema).optional(),
 });
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+import time
 from pathlib import Path
 
 from codeval.agents import (
@@ -144,7 +145,11 @@ async def run_validation(
             _notify(agent.name, "failed", str(exc))
             return AgentReport(agent=agent.name, analyzed=False)
 
-    reports: list[AgentReport] = await asyncio.gather(*[_run_agent(a) for a in agents])
+    _t0 = time.perf_counter()
+    tasks = [asyncio.create_task(_run_agent(a)) for a in agents]
+    reports: list[AgentReport] = list(await asyncio.gather(*tasks))
+    elapsed = time.perf_counter() - _t0
+    logger.info("Stage B (all agents): %.2fs", elapsed)
 
     # ── Identify failed categories ────────────────────────────────
     failed_categories: list[str] = []

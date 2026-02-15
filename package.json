@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "dev:alt": "next dev --port 3001",
+    "dev:turbo": "next dev --port 3000 --turbo",
     "dev:fresh": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev --port 3000",
+    "dev:fresh:turbo": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev --port 3000 --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

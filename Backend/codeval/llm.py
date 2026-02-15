@@ -26,7 +26,7 @@ ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
 
 # Concurrency limiter: cap parallel LLM calls to avoid 429 rate-limit storms
 _LLM_SEMAPHORE: asyncio.Semaphore | None = None
-_LLM_CONCURRENCY: int = 3
+_LLM_CONCURRENCY: int = 10
 
 
 def set_concurrency(n: int) -> None:

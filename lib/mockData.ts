@@ -1,14 +1,16 @@
 import type { ValidationReport, ValidationSection } from './schemas';
 
 const DEFAULT_SECTIONS: ValidationSection[] = [
-  { id: 'functional', label: 'Functional Validator', score: 82, details: [{ file: 'src/api/handlers.ts', line: 42, description: 'Missing input validation on request body', severity: 'high', suggestion: 'Add schema validation using Zod or similar.' }] },
-  { id: 'logic', label: 'Logical Inspector', score: 78, details: [{ file: 'src/utils/parser.ts', line: 17, description: 'Edge case not handled when input is empty', severity: 'medium', suggestion: 'Add early return for empty input.' }] },
-  { id: 'architecture', label: 'Structural Architect', score: 85, details: [{ file: 'src/services/index.ts', line: 8, description: 'Consider extracting service initialization to factory', severity: 'low', suggestion: 'Use dependency injection for testability.' }] },
-  { id: 'technical_debt', label: 'Tech Debt Checker', score: 68, details: [{ file: 'src/app.ts', line: 92, description: 'Duplicate logic detected', severity: 'medium', suggestion: 'Extract into shared utility.' }, { file: 'src/legacy/module.ts', line: 15, description: 'Unused variable', severity: 'low', suggestion: 'Remove or prefix with underscore.' }] },
-  { id: 'performance', label: 'Performance Expert', score: 72, details: [{ file: 'src/components/List.tsx', line: 28, description: 'Expensive recomputation on each render', severity: 'medium', suggestion: 'Use React.memo or useMemo.' }] },
-  { id: 'security', label: 'Security Auditor', score: 85, details: [{ file: 'src/utils/format.ts', line: 12, description: 'User input used without sanitization', severity: 'high', suggestion: 'Validate and sanitize before processing.' }] },
-  { id: 'observability', label: 'Log Verifier', score: 70, details: [{ file: 'src/api/routes.ts', line: 56, description: 'Error path lacks structured logging', severity: 'medium', suggestion: 'Add structured log with context.' }] },
-  { id: 'resilience', label: 'Error Manager', score: 75, details: [{ file: 'src/services/fetch.ts', line: 33, description: 'Network error not caught', severity: 'high', suggestion: 'Add try/catch and retry logic.' }] },
+  { id: 'functional', label: 'Functional', score: 82, details: [{ file: 'src/api/handlers.ts', line: 42, description: 'Missing input validation on request body', severity: 'high', suggestion: 'Add schema validation using Zod or similar.' }] },
+  { id: 'security', label: 'Security', score: 85, details: [{ file: 'src/utils/format.ts', line: 12, description: 'User input used without sanitization', severity: 'high', suggestion: 'Validate and sanitize before processing.' }] },
+  { id: 'resilience', label: 'Resilience', score: 75, details: [{ file: 'src/services/fetch.ts', line: 33, description: 'Network error not caught', severity: 'high', suggestion: 'Add try/catch and retry logic.' }] },
+  { id: 'performance', label: 'Performance', score: 72, details: [{ file: 'src/components/List.tsx', line: 28, description: 'Expensive recomputation on each render', severity: 'medium', suggestion: 'Use React.memo or useMemo.' }] },
+  { id: 'quality', label: 'Quality', score: 68, details: [{ file: 'src/app.ts', line: 92, description: 'Duplicate logic detected', severity: 'medium', suggestion: 'Extract into shared utility.' }] },
+  { id: 'dependency', label: 'Dependency', score: 70, details: [] },
+  { id: 'documentation', label: 'Documentation', score: 78, details: [] },
+  { id: 'architecture', label: 'Architecture', score: 85, details: [{ file: 'src/services/index.ts', line: 8, description: 'Consider extracting service initialization to factory', severity: 'low', suggestion: 'Use dependency injection for testability.' }] },
+  { id: 'concurrency', label: 'Concurrency', score: 80, details: [] },
+  { id: 'api_contract', label: 'API Contract', score: 76, details: [] },
 ];
 
 /**
@@ -18,10 +20,16 @@ const DEFAULT_SECTIONS: ValidationSection[] = [
 export function getMockValidationReport(_projectId: string): ValidationReport {
   return {
     scores: {
-      performance: 72,
+      functional: 82,
       security: 85,
-      codeQuality: 68,
-      architecture: 78,
+      resilience: 75,
+      performance: 72,
+      quality: 68,
+      dependency: 70,
+      documentation: 78,
+      architecture: 85,
+      concurrency: 80,
+      api_contract: 76,
     },
     feedback: [
       { id: 'fb-1', title: 'Consider memoizing expensive computations', severity: 'medium', filePath: 'src/app.ts', recommendation: 'Use React.memo or useMemo for components/functions that recompute on every render.' },
