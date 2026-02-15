@@ -311,25 +311,25 @@ function FileViewer({ projectId }: { projectId: string }) {
 
   const lines = (content ?? '').split(/\r?\n/);
   return (
-    <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-      <div className="border-b border-[var(--border)] border-opacity-40 px-2 py-1 text-[10px] text-[var(--muted)] truncate">
+    <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
+      <div className="shrink-0 border-b border-[var(--border)] border-opacity-40 px-2 py-1 text-[10px] text-[var(--muted)] truncate">
         {selectedPath}
       </div>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-h-0 overflow-auto bg-[var(--bg)]">
         {html ? (
           <div
-            className="overflow-auto text-sm rounded-md border border-[var(--border)] border-opacity-40 bg-neutral-950 p-2 font-mono text-[11px] leading-snug [&_pre]:m-0 [&_pre]:p-0 [&_pre]:bg-transparent [&_code]:block [&_code]:min-w-0"
+            className="text-sm min-h-full p-2 font-mono text-[11px] leading-snug [&_pre]:m-0 [&_pre]:p-0 [&_pre]:!bg-transparent [&_pre]:!border-0 [&_pre]:min-h-full [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:block [&_code]:min-w-0"
             dangerouslySetInnerHTML={{ __html: html }}
           />
         ) : (
-          <pre className="min-h-full font-mono text-[11px] leading-snug text-[var(--text)] p-2">
+          <pre className="min-h-full font-mono text-[11px] leading-snug text-[var(--text)] p-2 whitespace-pre-wrap break-words">
             <code>
               {lines.map((line, i) => (
                 <div key={i} className="table-row">
-                  <span className="table-cell w-6 select-none pr-2 text-right text-[var(--muted)] opacity-70">
+                  <span className="table-cell w-6 select-none pr-2 text-right text-[var(--muted)] opacity-70 align-top">
                     {i + 1}
                   </span>
-                  <span className="table-cell whitespace-pre break-all">
+                  <span className="table-cell whitespace-pre-wrap break-words">
                     {line || ' '}
                   </span>
                 </div>

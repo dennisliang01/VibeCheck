@@ -15,3 +15,149 @@
 {"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771116775699,"hypothesisId":"A"}
 {"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771116060407_njrxe9l"},"timestamp":1771116775708,"hypothesisId":"A"}
 {"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771116776158,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117057364,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117057364,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/variables.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117061013,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117061016,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/variables.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117061243,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117127399,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117127399,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117189242,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117189244,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/api.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117192951,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117192955,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/api.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117193206,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117215295,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117215295,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117358904,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117358904,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117363684,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117363685,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117364087,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117364099,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117364665,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117371057,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117371058,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117371416,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117371435,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117371881,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117384227,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117384227,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117384610,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117384622,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117385154,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117388948,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117388949,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117389368,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117389371,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/animations.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117389914,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117393645,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117393646,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117513292,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117513293,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117515171,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117515172,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117516925,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117516929,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117517226,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117518547,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117518552,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117518800,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117523947,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117523948,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117524513,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117524518,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117525118,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117526386,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117526387,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117526807,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117526820,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117527418,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117578524,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117578525,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117579107,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117579113,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117579779,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117581160,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117581161,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117581675,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117581685,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117582624,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117585210,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117585212,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117585818,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117585824,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117586536,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117587866,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117587867,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117588272,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117588284,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117588827,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117634749,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117635243,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117641743,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117642397,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117718684,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117718684,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117722116,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117722122,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117722427,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117773164,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117773165,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117773662,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117773667,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117774183,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117775037,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117775038,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117775532,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117775541,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117776023,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117778796,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117778797,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117779214,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117779219,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117779694,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117781021,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117781022,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117781378,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117781393,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117781853,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117787904,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117787905,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117788551,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117788562,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117789290,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117789440,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117789441,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117789968,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117707783_8aedza4"},"timestamp":1771117789977,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117790474,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117834806,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117834807,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117835260,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117835265,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117835985,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117842147,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117842147,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117842505,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117842509,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117842938,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117879058,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117879059,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117879259,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117879263,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117879475,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117941083_xelo9ah"},"timestamp":1771117951938,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117941083_xelo9ah"},"timestamp":1771117951938,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117957156,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117957158,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117957884,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117957892,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117941083_xelo9ah"},"timestamp":1771117958466,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117941083_xelo9ah"},"timestamp":1771117958468,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"js/app.js","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117958885,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117959379,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117941083_xelo9ah"},"timestamp":1771117959390,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fileHints","message":"Auto-open fileHints (selectedFilePath was empty)","data":{"fileHint":"css/animations.css","selectedFilePath":null,"runId":"post-fix"},"timestamp":1771117959976,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117987333,"hypothesisId":"A"}
+{"location":"QAPanel.tsx:fetchQuestion","message":"fetchQuestion called","data":{"projectId":"proj_1771117045371_77h0fvh"},"timestamp":1771117988114,"hypothesisId":"A"}

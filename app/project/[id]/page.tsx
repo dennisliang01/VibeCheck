@@ -80,9 +80,9 @@ export default function ProjectPage() {
 
   if (status !== 'ready') {
     return (
-      <div className="flex flex-col items-center justify-center gap-6 py-16 px-6 max-w-md mx-auto">
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-6 px-6">
         <h1 className="sr-only">Project</h1>
-        <div className="w-full">
+        <div className="w-full max-w-md">
           <div
             className="progress-bar-indeterminate h-1.5 w-full"
             role="progressbar"
@@ -90,12 +90,12 @@ export default function ProjectPage() {
             aria-label={status === 'building' ? 'Building project map' : 'Opening project'}
           />
         </div>
-        <p className="text-sm text-[var(--muted)]">
+        <p className="text-lg text-[var(--muted)]">
           {status === 'building' ? 'Building project map…' : 'Opening project…'}
         </p>
         <Link
           href="/"
-          className="text-xs text-[var(--muted)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
+          className="text-sm text-[var(--muted)] hover:text-[var(--text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] rounded"
         >
           Back to home
         </Link>
@@ -106,14 +106,16 @@ export default function ProjectPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col items-center justify-center gap-6 py-16 px-6 max-w-md mx-auto">
-          <div
-            className="progress-bar-indeterminate h-1.5 w-full"
-            role="progressbar"
-            aria-valuetext="Loading workspace"
-            aria-label="Loading workspace"
-          />
-          <p className="text-sm text-[var(--muted)]">Loading workspace…</p>
+        <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-6 px-6">
+          <div className="w-full max-w-md">
+            <div
+              className="progress-bar-indeterminate h-1.5 w-full"
+              role="progressbar"
+              aria-valuetext="Loading workspace"
+              aria-label="Loading workspace"
+            />
+          </div>
+          <p className="text-lg text-[var(--muted)]">Loading workspace…</p>
         </div>
       }
     >

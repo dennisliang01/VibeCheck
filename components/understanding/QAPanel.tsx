@@ -142,15 +142,15 @@ export function QAPanel({
 
   return (
     <section
-        className="flex flex-1 flex-col min-w-0 bg-[var(--card)] border-l border-[var(--border)] border-opacity-30"
+        className="flex flex-1 flex-col min-w-0 min-h-0 bg-[var(--card)] border-l border-[var(--border)] border-opacity-30"
         aria-labelledby="learn-heading"
       >
-        <div className="border-b border-[var(--border)] border-opacity-50 px-6 py-3">
+        <div className="shrink-0 border-b border-[var(--border)] border-opacity-50 px-6 py-3">
           <h2 id="learn-heading" className="text-xs font-medium uppercase tracking-wider text-[var(--accent)]">
             Question
           </h2>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
           {error && (
             <p id="answer-error" ref={answerErrorRef} className="mb-4 text-sm text-[var(--error)]" tabIndex={-1} role="alert">
               {error}
