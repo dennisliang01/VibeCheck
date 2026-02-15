@@ -1,0 +1,2731 @@
+{
+  "summary": "Validated Backend: 33 unique issues (from 87 raw findings, 54 merged), overall score 55.42/100",
+  "scores": {
+    "categories": {
+      "functional": 40.15,
+      "security": 22.31,
+      "resilience": 49.04,
+      "performance": 42.21,
+      "quality": 48.43,
+      "dependency": 100.0,
+      "documentation": 49.66,
+      "architecture": 100.0,
+      "concurrency": 44.37,
+      "api_contract": 100.0
+    },
+    "overall": 55.42
+  },
+  "findings": [
+    {
+      "id": "func-002",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Incomplete TODO in production heuristics code",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          128
+        ],
+        "snippet": "# TODO_FIXME"
+      },
+      "impact": "Production heuristics module contains unfinished work marker. The TODO_FIXME pattern itself appears to be incomplete or placeholder code, suggesting the heuristics detection may not be fully implemented or tested.",
+      "recommendation": "Complete the TODO_FIXME heuristic implementation. Verify pattern matching works correctly and add test coverage for detecting TODO/FIXME comments in analyzed codebases.",
+      "patch_hint": "Complete the heuristic pattern and ensure it's properly integrated into the analysis flow",
+      "test_hint": "Add test case with sample code containing TODO and FIXME comments, verify they're detected",
+      "source": "functional"
+    },
+    {
+      "id": "func-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "No discoverable entrypoints found in codebase",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          195
+        ],
+        "snippet": "def _is_entrypoint(path: Path) -> bool:\n    \"\"\"Check if path is an entrypoint.\"\"\"\n    return path.name in ENTRYPOINT_PATTE"
+      },
+      "impact": "Fingerprint analysis reports 'entrypoints=[]', indicating no main entry points are detected. This suggests either entrypoint detection is broken (pattern incomplete in snippet) or the application lacks clear entry points, making it difficult to understand how to run or use the codebase.",
+      "recommendation": "Complete the _is_entrypoint function with proper ENTRYPOINT_PATTERNS. Ensure patterns include common entrypoints like __main__.py, main.py, app.py, cli.py, manage.py, etc. Verify codeval/cli.py is detected as an entrypoint since it contains the CLI app definition.",
+      "patch_hint": "Fix incomplete ENTRYPOINT_PATTE reference and ensure ENTRYPOINT_PATTERNS list is comprehensive",
+      "test_hint": "Add test case verifying codeval/cli.py is detected as entrypoint",
+      "source": "functional"
+    },
+    {
+      "id": "func-003",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Missing timeout parameter validation in heuristics",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          20,
+          65
+        ],
+        "snippet": "(\"MISSING_TIMEOUT\", r\"(requests\\.(get|post|put|delete|patch)|socket\\.create_connection|urllib\\.request\\.urlopen)\\s*\\([^)]*(?!timeout)\", \"resilience\"),"
+      },
+      "impact": "The MISSING_TIMEOUT heuristic pattern uses negative lookahead (?!timeout) which may not correctly detect missing timeout parameters in all cases. The pattern attempts to match function calls without 'timeout' in the arguments, but this approach is fragile and may produce false positives/negatives.",
+      "recommendation": "Refactor MISSING_TIMEOUT detection to use AST parsing instead of regex for more accurate detection. The current regex-based approach cannot reliably determine if timeout parameter is present in complex function calls.",
+      "patch_hint": "Replace regex pattern with AST-based analysis that checks function call keyword arguments",
+      "test_hint": "Add test cases with requests.get() calls with and without timeout, including edge cases like timeout=None, timeout in **kwargs",
+      "source": "functional"
+    },
+    {
+      "id": "func-006",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Agent failure handling lacks partial result preservation",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          147
+        ],
+        "snippet": "except Exception as exc:\n            logger.warning(\"Agent %s crashed: %s\", agent.name, exc)\n            _notify(agent.name, \"failed\", str(exc))\n            return AgentReport(agent=agent.name, analyzed=False)"
+      },
+      "impact": "When an agent crashes, all its findings are lost. If an agent partially completes analysis before encountering an error, those findings are discarded. This reduces the value of graceful degradation since partial results could still be useful.",
+      "recommendation": "Modify agent exception handling to preserve any findings collected before the crash. Update AgentReport to support partial results with a 'partial' flag. Include partial findings in final report with appropriate warnings.",
+      "patch_hint": "Add try/except around agent.run() that checks if agent has partial findings before returning empty report",
+      "test_hint": "Add test for agent that collects some findings then raises exception, verify findings are preserved",
+      "source": "functional"
+    },
+    {
+      "id": "quality-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "God function in cli.py _render_markdown exceeds 200 lines",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "def _render_markdown(report: FinalReport) -> str:\n    \"\"\"Render FinalReport to Markdown.\"\"\"\n    lines = [\n        \"# Code Validation Report\",\n        \"\",\n        report.summary,\n        \"\",\n        \"## Scores\",\n        \"\",\n        f\"- **Overall**: {report.scores.overall:.2f}/100\",\n        \"\",\n..."
+      },
+      "impact": "223-line span indicates a monolithic function mixing multiple concerns (markdown rendering, formatting, iteration). Extremely difficult to test, modify, or reuse components.",
+      "recommendation": "Split into smaller functions: render_header(), render_scores(), render_findings_by_agent(), render_questions(), etc. Each should handle one aspect of the report.",
+      "patch_hint": "Extract sections into separate functions, each returning list[str] of lines, then join them in _render_markdown.",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "concurrency-critical-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Global mutable semaphore without thread-safe initialization",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          13,
+          19
+        ],
+        "snippet": "_LLM_SEMAPHORE: asyncio.Semaphore | None = None\n_LLM_CONCURRENCY: int = 3"
+      },
+      "impact": "Multiple asyncio tasks calling set_concurrency() or _get_semaphore() concurrently can trigger race conditions. The pattern `if _LLM_SEMAPHORE is None: _LLM_SEMAPHORE = asyncio.Semaphore(...)` in _get_semaphore() is not atomic. Two tasks checking the None condition simultaneously could both create a new Semaphore, leading to inconsistent concurrency limiting and broken synchronization.",
+      "recommendation": "Use asyncio.Lock to protect the semaphore initialization. Alternatively, initialize the semaphore once at module load or use a thread-safe singleton pattern with double-checked locking and a lock.",
+      "patch_hint": "Add `_SEMAPHORE_LOCK = asyncio.Lock()` at module level. In _get_semaphore(), wrap the check-and-create in `async with _SEMAPHORE_LOCK:` to ensure only one task initializes the semaphore.",
+      "test_hint": "Write a test that spawns multiple concurrent tasks calling set_concurrency() followed by _get_semaphore() and verify only one Semaphore instance is created.",
+      "source": "concurrency"
+    },
+    {
+      "id": "security-heur-4",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "Static heuristic: SQL_CONCAT",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          30
+        ],
+        "snippet": "# SQL concat: f-strings or % with SQL keywords, or execute(+ var)"
+      },
+      "impact": "Pattern SQL_CONCAT detected at codeval/heuristics.py:30",
+      "recommendation": "Review and address SQL_CONCAT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "SEC-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Code injection via eval() with user input",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          27
+        ],
+        "snippet": "x = eval(user_input)"
+      },
+      "impact": "Arbitrary code execution. An attacker can execute malicious Python code by controlling user_input, leading to complete system compromise.",
+      "recommendation": "Never use eval() with untrusted input. Use ast.literal_eval() for safe evaluation of Python literals, or implement a whitelist-based parser for your use case.",
+      "patch_hint": "Replace eval(user_input) with ast.literal_eval(user_input) or a domain-specific parser",
+      "test_hint": "Test with malicious inputs like __import__('os').system('whoami') to verify the vulnerability is fixed",
+      "source": "security"
+    },
+    {
+      "id": "SEC-002",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Command injection via shell=True in subprocess",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          30
+        ],
+        "snippet": "subprocess.run('ls', shell=True)"
+      },
+      "impact": "Command injection vulnerability. While this example uses a static string, shell=True enables shell interpretation and can lead to command injection if any part of the command is user-controlled.",
+      "recommendation": "Remove shell=True and pass command as a list: subprocess.run(['ls']). If shell features are needed, use shlex.quote() to escape user inputs.",
+      "patch_hint": "Change to subprocess.run(['ls'], shell=False) or subprocess.run(['ls'])",
+      "test_hint": "Test with user-controlled input like 'ls; rm -rf /' to verify shell injection is prevented",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-14",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "tests/test_orchestrator.py",
+        "lines": [
+          22
+        ],
+        "snippet": "# Should have heuristic-based findings (eval, shell=True, except)"
+      },
+      "impact": "Pattern SHELL_TRUE detected at tests/test_orchestrator.py:22",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-15",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "tests/test_slicer.py",
+        "lines": [
+          35
+        ],
+        "snippet": "# danger.py has eval, shell=True - should be included"
+      },
+      "impact": "Pattern SHELL_TRUE detected at tests/test_slicer.py:35",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-17",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "codeval/agents/security.py",
+        "lines": [
+          17
+        ],
+        "snippet": "- subprocess with shell=True"
+      },
+      "impact": "Pattern SHELL_TRUE detected at codeval/agents/security.py:17",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "quality-002",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "DRY violation: duplicate pattern matching code across slicer.py",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          24,
+          118
+        ],
+        "snippet": "SECURITY_PATTERNS = [\n    r\"\\beval\\s*\\(\",\n    r\"\\bexec\\s*\\(\",\n    ...\n]\nERROR_HANDLING_PATTERNS = [\n    r\"\\btry\\s*:\",\n    ...\n]\nPERFORMANCE_PATTERNS = [\n    r\"\\.query\\s*\\(\",\n    ...\n]\nCONCURRENCY_PATTERNS = [\n    r\"\\bthreading\\b\",\n    ...\n]\nAPI_ROUTE_PATTERNS = [\n    r\"@app\\.(route|get|post|put|delete|patch)\",\n    ...\n]\nARCHITECTURE_PATTERNS = [\n    r\"^import\\s\",\n    ...\n]\n\nSECURITY_RE = re.compile(\"|\".join(f\"({p})\" for p in SECURITY_PATTERNS), re.IGNORECASE)\nERROR_RE = re.compile(\"|\".join(f\"({p})\" for p in ERROR_HANDLING_PATTERNS))\nPERFORMANCE_RE = re.compile(\"|\".join(f\"({p})\" for p in PERFORMANCE_PATTERNS))"
+      },
+      "impact": "Same pattern compilation logic repeated 6 times. Any change to how patterns are compiled must be synchronized across all instances.",
+      "recommendation": "Create a helper function compile_patterns(patterns: list[str], flags=0) -> re.Pattern that encapsulates the join and compile logic.",
+      "patch_hint": "def compile_patterns(patterns: list[str], flags=0) -> re.Pattern:\n    return re.compile('|'.join(f'({p})' for p in patterns), flags)\n\nSECURITY_RE = compile_patterns(SECURITY_PATTERNS, re.IGNORECASE)",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "res-cli-broad-except-env-1",
+      "severity": "high",
+      "confidence": 0.95,
+      "title": "Overly broad exception handler swallows .env parsing errors",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          32
+        ],
+        "snippet": "except Exception:\n    pass"
+      },
+      "impact": "Silent failures when loading environment variables from .env files. Critical API keys may fail to load without any indication, causing downstream authentication failures that are difficult to debug.",
+      "recommendation": "Catch specific exceptions (IOError, UnicodeDecodeError, ValueError) and log warnings when .env parsing fails. This maintains graceful degradation while providing visibility into configuration issues.",
+      "patch_hint": "Replace 'except Exception:' with 'except (IOError, UnicodeDecodeError) as e:' and add logging: logger.warning('Failed to parse .env: %s', e)",
+      "test_hint": "Add test cases for malformed .env files, missing files, and encoding errors to verify proper error handling and logging",
+      "source": "resilience"
+    },
+    {
+      "id": "res-cli-broad-except-main-2",
+      "severity": "medium",
+      "confidence": 0.85,
+      "title": "Broad exception handler in CLI main masks all runtime errors",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          239
+        ],
+        "snippet": "except Exception as e:\n    typer.echo(f\"Error: {e}\", err=True)"
+      },
+      "impact": "All unhandled exceptions during validation are caught and reduced to a generic error message. This hides stack traces and makes debugging production issues significantly harder, especially for unexpected errors.",
+      "recommendation": "Only catch specific expected exceptions (ValidationError, ConfigurationError). Let unexpected exceptions propagate with full stack traces, or add a --debug flag to control verbosity.",
+      "patch_hint": "Add specific exception types: 'except (ValidationError, FileNotFoundError) as e:' and let other exceptions propagate or add: 'if debug: raise' before the generic handler",
+      "test_hint": "Test that unexpected exceptions (e.g., KeyError, AttributeError) produce useful stack traces when --debug is enabled",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-5",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          184
+        ],
+        "snippet": "except Exception as e:"
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at codeval/llm.py:184",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "res-orchestrator-agent-crash-3",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Agent crashes swallowed without retry or proper error propagation",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          142
+        ],
+        "snippet": "except Exception as exc:\n    logger.warning(\"Agent %s crashed: %s\", agent.name, exc)\n    _notify(agent.name, \"failed\", str(exc))\n    return AgentReport(agent=agent.name, analyzed=False)"
+      },
+      "impact": "Transient failures (network timeouts, rate limits, temporary resource exhaustion) are treated the same as permanent failures. No retry logic means agents fail unnecessarily, reducing analysis quality.",
+      "recommendation": "Implement exponential backoff retry for transient errors (rate limits, network issues). Only catch and swallow exceptions after retry exhaustion. Consider circuit breaker pattern for repeated failures.",
+      "patch_hint": "Add retry decorator with exponential backoff: '@retry(max_attempts=3, backoff=2.0, exceptions=(RateLimitError, NetworkError))' or use tenacity library",
+      "test_hint": "Mock transient failures and verify retry behavior. Test that permanent failures (ValueError, TypeError) don't trigger retries",
+      "source": "resilience"
+    },
+    {
+      "id": "res-osv-silent-parse-fail-5",
+      "severity": "medium",
+      "confidence": 0.88,
+      "title": "Dependency file parsing errors silently ignored",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          237
+        ],
+        "snippet": "except Exception as e:\n    return pkgs"
+      },
+      "impact": "Malformed dependency files (package.json, requirements.txt, etc.) fail to parse silently, resulting in incomplete vulnerability scanning. Critical dependencies may be missed without any warning to the user.",
+      "recommendation": "Catch specific parsing exceptions (json.JSONDecodeError, toml.TOMLDecodeError) and log warnings with file paths. Return partial results but indicate parsing failures in the report.",
+      "patch_hint": "Replace with 'except (json.JSONDecodeError, ValueError) as e:' and add 'logger.warning(\"Failed to parse %s: %s\", source, e)' before returning",
+      "test_hint": "Create test cases with malformed JSON, TOML, and other dependency formats. Verify warnings are logged and partial results are returned",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-16",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Static heuristic: BARE_EXCEPT",
+      "evidence": {
+        "file": "codeval/agents/resilience.py",
+        "lines": [
+          15
+        ],
+        "snippet": "- Bare except (except:)"
+      },
+      "impact": "Pattern BARE_EXCEPT detected at codeval/agents/resilience.py:15",
+      "recommendation": "Review and address BARE_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "perf-001-blocking-read-loop",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Blocking file I/O in potential async context",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          74,
+          75
+        ],
+        "snippet": "try:\n            content = full_path.read_text(encoding=\"utf-8\", errors=\"replace\")\n        except OSError:\n            continue"
+      },
+      "impact": "Synchronous file reads inside a loop that processes dependency files. If this runs in an async context (as suggested by asyncio usage in orchestrator.py), each blocking read will stall the event loop. With N dependency files, this creates O(N) blocking operations that could be parallelized with asyncio.to_thread or aiofiles.",
+      "recommendation": "Use async file I/O: `content = await asyncio.to_thread(full_path.read_text, encoding='utf-8', errors='replace')` or use aiofiles library. Alternatively, parallelize the file reads using asyncio.gather if multiple dependency files exist.",
+      "patch_hint": "async def _read_dep_file_async(path: Path) -> str | None:\n    return await asyncio.to_thread(path.read_text, encoding='utf-8', errors='replace')\n\n# Then in loop:\ncontent = await _read_dep_file_async(full_path)\nif content is None:\n    continue",
+      "test_hint": "Benchmark with 50+ dependency files to measure improvement from async I/O",
+      "source": "performance"
+    },
+    {
+      "id": "perf-002-repeated-regex-compilation",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Regex compilation inside hot path",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          89,
+          90,
+          91
+        ],
+        "snippet": "SECURITY_RE = re.compile(\"|\".join(f\"({p})\" for p in SECURITY_PATTERNS), re.IGNORECASE)\nERROR_RE = re.compile(\"|\".join(f\"({p})\" for p in ERROR_HANDLING_PATTERNS))\nPERFORMANCE_RE = re.compile(\"|\".join(f\"({p})\" for p in PERFORMANCE_PA"
+      },
+      "impact": "These regex patterns are compiled at module level, which is correct. However, the snippet shows PERFORMANCE_PA is truncated - if this pattern is being recompiled per-file in the slicer logic, it would cause O(N) compilations for N files.",
+      "recommendation": "Verify PERFORMANCE_RE compilation is at module level (not inside any function). Ensure all regex patterns in slicer.py are compiled once at import time.",
+      "patch_hint": "# At module level (current location is correct):\nPERFORMANCE_RE = re.compile(\"|\".join(f\"({p})\" for p in PERFORMANCE_PATTERNS))\n# Never re-compile inside loops",
+      "test_hint": "Profile slicer.py with 100+ files to ensure regex compilation time is constant",
+      "source": "performance"
+    },
+    {
+      "id": "perf-003-unbounded-file-reads",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "No streaming for large file reads",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          45,
+          49
+        ],
+        "snippet": "def _read_safe(path: Path, max_size: int = MAX_FILE_SIZE) -> str | None:\n    \"\"\"Read file safely.\"\"\"\n    try:\n        size = path.stat().st_size\n        if size > max_size:\n            return None\n        with open(path, \"r\", encoding=\"utf-8\", errors=\"strict\") as f"
+      },
+      "impact": "Reads entire file into memory. MAX_FILE_SIZE limit helps, but for files near the limit, this loads potentially megabytes into RAM per file. With parallel processing, memory usage scales as O(N * file_size).",
+      "recommendation": "For heuristic scanning (regex matching), stream file line-by-line or in chunks. Most patterns can be detected per-line without loading full file.",
+      "patch_hint": "def _scan_file_streaming(path: Path, patterns: list[tuple]) -> list:\n    results = []\n    with open(path, 'r', encoding='utf-8', errors='strict') as f:\n        for line_num, line in enumerate(f, 1):\n            for name, pattern, category in patterns:\n                if re.search(pattern, line):\n                    results.append((name, line_num, line.strip()))\n    return results",
+      "test_hint": "Test with 10MB files to verify memory usage stays constant",
+      "source": "performance"
+    },
+    {
+      "id": "perf-006-list-comprehension-in-slicer",
+      "severity": "medium",
+      "confidence": 0.7,
+      "title": "List comprehensions where generators would suffice",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          30
+        ],
+        "snippet": "paths = [s.path for s in snippets]"
+      },
+      "impact": "Creates intermediate list just for membership checking. For N snippets, allocates O(N) list when generator expression would work.",
+      "recommendation": "Use generator expression if only iterating once: `any('danger' in s.path for s in snippets)` instead of building list first.",
+      "patch_hint": "# Instead of:\npaths = [s.path for s in snippets]\nassert any('danger' in p for p in paths)\n\n# Use:\nassert any('danger' in s.path for s in snippets)",
+      "test_hint": "Not critical, but reduces allocations in test code",
+      "source": "performance"
+    },
+    {
+      "id": "concurrency-high-001",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Potential blocking I/O in async context with Path.read_text",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          25
+        ],
+        "snippet": "raw = env_path.read_text(encoding=\"utf-8-sig\").strip()"
+      },
+      "impact": "Path.read_text() is synchronous blocking I/O. If called inside an async function (e.g. wrapped in an async CLI handler), it blocks the event loop, degrading concurrency and responsiveness. This pattern appears in a synchronous _load_env() context here, but if this code is invoked from an async entry point, it will block.",
+      "recommendation": "If the CLI runs in an async context (e.g. typer with async commands), use aiofiles or asyncio.to_thread() to offload file reads. If CLI is purely synchronous, this is acceptable but document that async code should not call _load_env().",
+      "patch_hint": "Wrap with `await asyncio.to_thread(env_path.read_text, encoding='utf-8-sig')` if inside async. Alternatively, use aiofiles library: `async with aiofiles.open(env_path) as f: raw = await f.read()`",
+      "test_hint": "Run CLI with async commands and monitor event loop blocking with asyncio debug mode or profiling.",
+      "source": "concurrency"
+    },
+    {
+      "id": "perf-008-string-concatenation-in-markdown",
+      "severity": "low",
+      "confidence": 0.6,
+      "title": "Repeated string concatenation for report rendering",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          42,
+          43,
+          47
+        ],
+        "snippet": "lines = [\n        \"# Code Validation Report\",\n        \"\",\n        report.summary,\n        \"\",\n        \"## Scores\",\n        \"\",\n        f\"- **Overall**: {report.scores.overall:.2f}/100\","
+      },
+      "impact": "Uses list for lines (good), but if there are many string concatenations with '+' elsewhere in markdown rendering, it could be O(N^2). Current code looks fine (list-based).",
+      "recommendation": "Verify final markdown assembly uses ''.join(lines) not repeated '+=' operations.",
+      "patch_hint": "# Good (current pattern):\nlines = [...]\nreturn '\\n'.join(lines)\n\n# Bad (avoid):\nresult = ''\nfor line in lines:\n    result += line + '\\n'  # O(N^2)",
+      "test_hint": "Profile with reports containing 1000+ findings",
+      "source": "performance"
+    },
+    {
+      "id": "perf-009-llm-context-truncation",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Simple truncation instead of smart chunking",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          48,
+          51,
+          52
+        ],
+        "snippet": "def _truncate_context(text: str, max_chars: int = MAX_CONTEXT_CHARS) -> str:\n    \"\"\"Truncate context to fit token limits.\"\"\"\n    if len(text) <= max_chars:\n        return text\n    return text[: max_chars - 100] + \"\\n"
+      },
+      "impact": "Simple prefix truncation may cut off important code at the end of large codebases. Not a performance issue per se, but affects analysis quality.",
+      "recommendation": "Implement smart chunking: prioritize high-risk files, distribute budget across files, or use sliding window with overlap.",
+      "patch_hint": "def _truncate_smart(snippets: list, max_chars: int) -> str:\n    # Sort by priority (security patterns, entry points)\n    sorted_snippets = sorted(snippets, key=lambda s: s.priority, reverse=True)\n    result = []\n    budget = max_chars\n    for snip in sorted_snippets:\n        if len(snip.content) <= budget:\n            result.append(snip.content)\n            budget -= len(snip.content)\n    return '\\n---\\n'.join(result)",
+      "test_hint": "Test LLM analysis quality on large repos",
+      "source": "performance"
+    },
+    {
+      "id": "quality-005",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Long function in osv.py spanning lines 68-212 (144 lines)",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          68,
+          212
+        ],
+        "snippet": "filename = Path(dep_file).name\n        ecosystem = ECOSYSTEM_MAP.get(filename, \"\")\n        if not ecosystem:\n            continue\n\n        try:\n            content = full_path.read_text(encoding=\"utf-8\", errors=\"replace\")\n        except OSError:\n            continue\n\n        if filename == \"package.json\":\n            packages.extend(_parse_package_json(content, dep_file))\n        elif filename == \"requirements.txt\":\n            packages.extend(_parse_requirements_txt(content, dep_file))\n        elif filename == \"Pipfile\":\n            packages.extend(_parse_pipfile(content, dep_file))\n        elif filename == \"go.mod\":\n            packages.extend(_parse_go_mod(content, dep_file))\n        elif filename == \"Cargo.toml\":\n            packages.extend(_parse_cargo_toml(content, dep_file))\n        elif filename in (\"pyproject.toml\", \"setup.cfg\"):\n            packages.extend(_parse_requirements_txt(content, dep_file))\n\n    return packages\n\n\ndef _parse_package_json(content: str, source: str) -> list[PackageInfo]:\n    \"\"\"Parse package.json dependencies.\"\"\"\n    pkgs: list[PackageInfo] = []\n    try:\n        data = json.loads(content)\n    except json.JSONDecodeError:\n        return pkgs\n\n    for section in (\"dependencies\", \"devDependencies\", \"peerDependencies\"):\n        deps = data.get(section, {})\n        if isinstance(deps, dict):\n            for name, version in deps.items():\n                # Strip version prefixes: ^, ~, >=, etc.\n                clean = re.sub(r\"^[\\^~>=<]*\", \""
+      },
+      "impact": "144-line function mixing file reading, ecosystem detection, multiple parsing branches, and aggregation logic. Hard to unit test each parsing format independently.",
+      "recommendation": "Already partially split with _parse_* functions. Extract the main loop logic into parse_dependency_file(filepath, content) and a coordinator function.",
+      "patch_hint": "Move the if/elif chain for filename dispatch into a PARSER_MAP dict: {\"package.json\": _parse_package_json, ...} and call PARSER_MAP.get(filename, lambda c,s: [])(content, dep_file).",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-016",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Unused variable 'call_count' in test mock (test_llm.py)",
+      "evidence": {
+        "file": "tests/test_llm.py",
+        "lines": [
+          85,
+          106
+        ],
+        "snippet": "call_count = 0\n\n        async def _mock_parse(**kwargs):\n            nonlocal call_count\n            call_count += 1\n            if call_count < 3:\n                raise Exception(\"Error 429: rate limit exceeded\")"
+      },
+      "impact": "call_count is incremented but the test doesn't assert its final value. May indicate incomplete test or dead code.",
+      "recommendation": "Add assertion after the test: assert call_count == 3 to verify retry logic worked as expected.",
+      "patch_hint": "After await complete(...): assert call_count == 3, 'Expected exactly 3 attempts'",
+      "test_hint": "Verify the retry backoff logic retried exactly the expected number of times.",
+      "source": "quality"
+    },
+    {
+      "id": "doc-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "README missing installation and usage sections",
+      "evidence": {
+        "file": "README.md",
+        "lines": [
+          3,
+          13
+        ],
+        "snippet": "## Features\n\n- **Fingerprint-based routing**: Detects languages, frameworks, tests, and entrypoints\n- **Static heuristics**: TODO/FIXME, bare except, eval/exec, shell=True, SQL concatenation, unsafe deserialization, missing timeouts\n- **Optional LLM enhancement**: OpenAI-compatible API for deeper analysis (falls back to static-only if no key)\n- **Extensible**: Add new agents via copy/paste + registration\n\n## Requirements"
+      },
+      "impact": "Users cannot install or run the tool without searching code. Critical for a published package MVP.",
+      "recommendation": "Add ## Installation section with pip install command and ## Usage section with basic CLI examples",
+      "patch_hint": "## Installation\n\n```bash\npip install codeval\n```\n\n## Usage\n\n```bash\ncodeval /path/to/repo\ncodeval /path/to/repo --output html\n```",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-002",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Public BaseAgent class missing docstrings",
+      "evidence": {
+        "file": "codeval/agents/base.py",
+        "lines": [
+          1,
+          1
+        ],
+        "snippet": "from codeval.agents.base import BaseAgent"
+      },
+      "impact": "Core extensibility point for adding agents lacks API documentation. Developers cannot understand the contract.",
+      "recommendation": "Add class-level docstring explaining BaseAgent interface and run() method contract",
+      "patch_hint": "class BaseAgent:\n    \"\"\"Base class for specialist code analysis agents.\n    \n    Subclasses must implement run() to analyze code snippets and return AgentReport.\n    Agents receive fingerprint, file snippets, heuristics, and llm_enabled flag.\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-010",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "HTML report generation missing inline examples",
+      "evidence": {
+        "file": "codeval/html_report.py",
+        "lines": [
+          1,
+          6
+        ],
+        "snippet": "\"\"\"Generate a self-contained HTML validation report.\n\nThe output is a single HTML file with all CSS/JS inlined -- no external\ndependencies.  Designed to look polished when opened in any browser, including\nprojector screens at hackathon demos.\n\"\"\""
+      },
+      "impact": "Module docstring describes output but lacks usage example. Unclear what parameters render_html accepts.",
+      "recommendation": "Add function-level docstring with parameter descriptions and usage example",
+      "patch_hint": "def render_html(report: FinalReport) -> str:\n    \"\"\"Render FinalReport to standalone HTML.\n    \n    Args:\n        report: Validated FinalReport with findings and scores\n    \n    Returns:\n        HTML string with inlined CSS/JS, ready to write to file\n    \n    Example:\n        html = render_html(report)\n        Path('output.html').write_text(html)\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-011",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Schema classes lack field descriptions",
+      "evidence": {
+        "file": "codeval/schemas.py",
+        "lines": [
+          1,
+          6
+        ],
+        "snippet": "\"\"\"Pydantic schemas for agent outputs and final report.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Literal"
+      },
+      "impact": "Core data structures lack docstrings. API consumers cannot understand field semantics without reading code.",
+      "recommendation": "Add class-level docstrings and Field descriptions for all Pydantic models",
+      "patch_hint": "class AgentFinding(BaseModel):\n    \"\"\"A single security, functional, or resilience finding.\n    \n    Attributes:\n        id: Unique identifier for finding\n        severity: critical|high|medium|low\n        confidence: 0.0-1.0 confidence score\n        evidence: File location and code snippet\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "concurrency-critical-002",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "Race condition in set_concurrency with global state reset",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          26,
+          29
+        ],
+        "snippet": "def set_concurrency(n: int) -> None:\n    global _LLM_SEMAPHORE, _LLM_CONCURRENCY\n    _LLM_CONCURRENCY = max(1, n)\n    _LLM_SEMAPHORE = None"
+      },
+      "impact": "Setting _LLM_SEMAPHORE to None while other tasks may be acquiring it in _get_semaphore() creates a race condition. If one task is in the middle of checking `if _LLM_SEMAPHORE is None:` while another calls set_concurrency(), the semaphore can be reset mid-flight, causing tasks to bypass concurrency limits or deadlock.",
+      "recommendation": "Protect set_concurrency() and _get_semaphore() with the same asyncio.Lock. Ensure semaphore updates are atomic and no task can observe partial state.",
+      "patch_hint": "Use `async with _SEMAPHORE_LOCK:` in both set_concurrency() (make it async) and _get_semaphore(). Alternatively, disallow runtime changes to concurrency or recreate the semaphore atomically.",
+      "test_hint": "Test concurrent calls to set_concurrency() and _get_semaphore() from multiple tasks and verify no semaphore is lost or duplicated.",
+      "source": "concurrency"
+    }
+  ],
+  "clusters": [
+    {
+      "cluster_id": "cluster-001",
+      "primary_finding_id": "func-002",
+      "related_finding_ids": [
+        "functional-heur-2"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Incomplete TODO in production heuristics code",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Production heuristics module contains unfinished work marker. The TODO_FIXME pattern itself appears to be incomplete or placeholder code, suggesting the heuristics detection may not be fully implemented or tested.",
+      "consolidated_recommendation": "Complete the TODO_FIXME heuristic implementation. Verify pattern matching works correctly and add test coverage for detecting TODO/FIXME comments in analyzed codebases.",
+      "category": "functional"
+    },
+    {
+      "cluster_id": "cluster-002",
+      "primary_finding_id": "func-001",
+      "related_finding_ids": [
+        "quality-004",
+        "func-005",
+        "perf-005-fingerprint-binary-check",
+        "quality-006",
+        "doc-006",
+        "arch-cohesion-fingerprint-osv"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "No discoverable entrypoints found in codebase",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Fingerprint analysis reports 'entrypoints=[]', indicating no main entry points are detected. This suggests either entrypoint detection is broken (pattern incomplete in snippet) or the application lacks clear entry points, making it difficult to understand how to run or use the codebase.",
+      "consolidated_recommendation": "Complete the _is_entrypoint function with proper ENTRYPOINT_PATTERNS. Ensure patterns include common entrypoints like __main__.py, main.py, app.py, cli.py, manage.py, etc. Verify codeval/cli.py is detected as an entrypoint since it contains the CLI app definition.",
+      "category": "functional"
+    },
+    {
+      "cluster_id": "cluster-003",
+      "primary_finding_id": "func-003",
+      "related_finding_ids": [
+        "SEC-003",
+        "quality-003",
+        "doc-004",
+        "func-004",
+        "SEC-004",
+        "quality-010",
+        "security-heur-3",
+        "arch-mixed-concerns-heuristics"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Missing timeout parameter validation in heuristics",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "The MISSING_TIMEOUT heuristic pattern uses negative lookahead (?!timeout) which may not correctly detect missing timeout parameters in all cases. The pattern attempts to match function calls without 'timeout' in the arguments, but this approach is fragile and may produce false positives/negatives.",
+      "consolidated_recommendation": "Refactor MISSING_TIMEOUT detection to use AST parsing instead of regex for more accurate detection. The current regex-based approach cannot reliably determine if timeout parameter is present in complex function calls.",
+      "category": "functional"
+    },
+    {
+      "cluster_id": "cluster-004",
+      "primary_finding_id": "func-006",
+      "related_finding_ids": [
+        "perf-004-sequential-agent-file-reads",
+        "quality-009",
+        "doc-009",
+        "arch-missing-di-orchestrator",
+        "quality-012"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Agent failure handling lacks partial result preservation",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "When an agent crashes, all its findings are lost. If an agent partially completes analysis before encountering an error, those findings are discarded. This reduces the value of graceful degradation since partial results could still be useful.",
+      "consolidated_recommendation": "Modify agent exception handling to preserve any findings collected before the crash. Update AgentReport to support partial results with a 'partial' flag. Include partial findings in final report with appropriate warnings.",
+      "category": "functional"
+    },
+    {
+      "cluster_id": "cluster-005",
+      "primary_finding_id": "quality-001",
+      "related_finding_ids": [
+        "arch-circ-dep-cli-orchestrator",
+        "doc-003",
+        "arch-god-module-cli",
+        "quality-008",
+        "func-007",
+        "quality-013",
+        "quality-014",
+        "doc-014"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "God function in cli.py _render_markdown exceeds 200 lines",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "223-line span indicates a monolithic function mixing multiple concerns (markdown rendering, formatting, iteration). Extremely difficult to test, modify, or reuse components.",
+      "consolidated_recommendation": "Split into smaller functions: render_header(), render_scores(), render_findings_by_agent(), render_questions(), etc. Each should handle one aspect of the report.",
+      "category": "quality"
+    },
+    {
+      "cluster_id": "cluster-006",
+      "primary_finding_id": "concurrency-critical-001",
+      "related_finding_ids": [
+        "res-llm-missing-timeout-4",
+        "doc-005",
+        "arch-layer-violation-llm-semaphore",
+        "quality-007",
+        "quality-011",
+        "func-008",
+        "quality-015"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Global mutable semaphore without thread-safe initialization",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Multiple asyncio tasks calling set_concurrency() or _get_semaphore() concurrently can trigger race conditions. The pattern `if _LLM_SEMAPHORE is None: _LLM_SEMAPHORE = asyncio.Semaphore(...)` in _get_semaphore() is not atomic. Two tasks checking the None condition simultaneously could both create a new Semaphore, leading to inconsistent concurrency limiting and broken synchronization.",
+      "consolidated_recommendation": "Use asyncio.Lock to protect the semaphore initialization. Alternatively, initialize the semaphore once at module load or use a thread-safe singleton pattern with double-checked locking and a lock.",
+      "category": "concurrency"
+    },
+    {
+      "cluster_id": "cluster-007",
+      "primary_finding_id": "security-heur-4",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Static heuristic: SQL_CONCAT",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Pattern SQL_CONCAT detected at codeval/heuristics.py:30",
+      "consolidated_recommendation": "Review and address SQL_CONCAT pattern",
+      "category": "security"
+    },
+    {
+      "cluster_id": "cluster-008",
+      "primary_finding_id": "SEC-001",
+      "related_finding_ids": [
+        "doc-012",
+        "security-heur-11",
+        "security-heur-12",
+        "resilience-heur-8"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Code injection via eval() with user input",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Arbitrary code execution. An attacker can execute malicious Python code by controlling user_input, leading to complete system compromise.",
+      "consolidated_recommendation": "Never use eval() with untrusted input. Use ast.literal_eval() for safe evaluation of Python literals, or implement a whitelist-based parser for your use case.",
+      "category": "security"
+    },
+    {
+      "cluster_id": "cluster-009",
+      "primary_finding_id": "SEC-002",
+      "related_finding_ids": [
+        "security-heur-13",
+        "resilience-heur-9",
+        "resilience-heur-10"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Command injection via shell=True in subprocess",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Command injection vulnerability. While this example uses a static string, shell=True enables shell interpretation and can lead to command injection if any part of the command is user-controlled.",
+      "consolidated_recommendation": "Remove shell=True and pass command as a list: subprocess.run(['ls']). If shell features are needed, use shlex.quote() to escape user inputs.",
+      "category": "security"
+    },
+    {
+      "cluster_id": "cluster-010",
+      "primary_finding_id": "security-heur-14",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Static heuristic: SHELL_TRUE",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Pattern SHELL_TRUE detected at tests/test_orchestrator.py:22",
+      "consolidated_recommendation": "Review and address SHELL_TRUE pattern",
+      "category": "security"
+    },
+    {
+      "cluster_id": "cluster-011",
+      "primary_finding_id": "security-heur-15",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Static heuristic: SHELL_TRUE",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Pattern SHELL_TRUE detected at tests/test_slicer.py:35",
+      "consolidated_recommendation": "Review and address SHELL_TRUE pattern",
+      "category": "security"
+    },
+    {
+      "cluster_id": "cluster-012",
+      "primary_finding_id": "security-heur-17",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Static heuristic: SHELL_TRUE",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Pattern SHELL_TRUE detected at codeval/agents/security.py:17",
+      "consolidated_recommendation": "Review and address SHELL_TRUE pattern",
+      "category": "security"
+    },
+    {
+      "cluster_id": "cluster-013",
+      "primary_finding_id": "quality-002",
+      "related_finding_ids": [
+        "arch-high-coupling-slicer",
+        "SEC-005",
+        "doc-008",
+        "doc-013"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "DRY violation: duplicate pattern matching code across slicer.py",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Same pattern compilation logic repeated 6 times. Any change to how patterns are compiled must be synchronized across all instances.",
+      "consolidated_recommendation": "Create a helper function compile_patterns(patterns: list[str], flags=0) -> re.Pattern that encapsulates the join and compile logic.",
+      "category": "quality"
+    },
+    {
+      "cluster_id": "cluster-014",
+      "primary_finding_id": "res-cli-broad-except-env-1",
+      "related_finding_ids": [
+        "resilience-heur-0"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Overly broad exception handler swallows .env parsing errors",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Silent failures when loading environment variables from .env files. Critical API keys may fail to load without any indication, causing downstream authentication failures that are difficult to debug.",
+      "consolidated_recommendation": "Catch specific exceptions (IOError, UnicodeDecodeError, ValueError) and log warnings when .env parsing fails. This maintains graceful degradation while providing visibility into configuration issues.",
+      "category": "resilience"
+    },
+    {
+      "cluster_id": "cluster-015",
+      "primary_finding_id": "res-cli-broad-except-main-2",
+      "related_finding_ids": [
+        "resilience-heur-1"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Broad exception handler in CLI main masks all runtime errors",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "All unhandled exceptions during validation are caught and reduced to a generic error message. This hides stack traces and makes debugging production issues significantly harder, especially for unexpected errors.",
+      "consolidated_recommendation": "Only catch specific expected exceptions (ValidationError, ConfigurationError). Let unexpected exceptions propagate with full stack traces, or add a --debug flag to control verbosity.",
+      "category": "resilience"
+    },
+    {
+      "cluster_id": "cluster-016",
+      "primary_finding_id": "resilience-heur-5",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Static heuristic: BROAD_EXCEPT",
+      "consolidated_severity": "low",
+      "consolidated_impact": "Pattern BROAD_EXCEPT detected at codeval/llm.py:184",
+      "consolidated_recommendation": "Review and address BROAD_EXCEPT pattern",
+      "category": "resilience"
+    },
+    {
+      "cluster_id": "cluster-017",
+      "primary_finding_id": "res-orchestrator-agent-crash-3",
+      "related_finding_ids": [
+        "concurrency-medium-001",
+        "perf-010-test-async-gather-overhead",
+        "resilience-heur-6"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Agent crashes swallowed without retry or proper error propagation",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Transient failures (network timeouts, rate limits, temporary resource exhaustion) are treated the same as permanent failures. No retry logic means agents fail unnecessarily, reducing analysis quality.",
+      "consolidated_recommendation": "Implement exponential backoff retry for transient errors (rate limits, network issues). Only catch and swallow exceptions after retry exhaustion. Consider circuit breaker pattern for repeated failures.",
+      "category": "resilience"
+    },
+    {
+      "cluster_id": "cluster-018",
+      "primary_finding_id": "res-osv-silent-parse-fail-5",
+      "related_finding_ids": [
+        "resilience-heur-7"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Dependency file parsing errors silently ignored",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "Malformed dependency files (package.json, requirements.txt, etc.) fail to parse silently, resulting in incomplete vulnerability scanning. Critical dependencies may be missed without any warning to the user.",
+      "consolidated_recommendation": "Catch specific parsing exceptions (json.JSONDecodeError, toml.TOMLDecodeError) and log warnings with file paths. Return partial results but indicate parsing failures in the report.",
+      "category": "resilience"
+    },
+    {
+      "cluster_id": "cluster-019",
+      "primary_finding_id": "resilience-heur-16",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Static heuristic: BARE_EXCEPT",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "Pattern BARE_EXCEPT detected at codeval/agents/resilience.py:15",
+      "consolidated_recommendation": "Review and address BARE_EXCEPT pattern",
+      "category": "resilience"
+    },
+    {
+      "cluster_id": "cluster-020",
+      "primary_finding_id": "perf-001-blocking-read-loop",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Blocking file I/O in potential async context",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Synchronous file reads inside a loop that processes dependency files. If this runs in an async context (as suggested by asyncio usage in orchestrator.py), each blocking read will stall the event loop. With N dependency files, this creates O(N) blocking operations that could be parallelized with asyncio.to_thread or aiofiles.",
+      "consolidated_recommendation": "Use async file I/O: `content = await asyncio.to_thread(full_path.read_text, encoding='utf-8', errors='replace')` or use aiofiles library. Alternatively, parallelize the file reads using asyncio.gather if multiple dependency files exist.",
+      "category": "performance"
+    },
+    {
+      "cluster_id": "cluster-021",
+      "primary_finding_id": "perf-002-repeated-regex-compilation",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Regex compilation inside hot path",
+      "consolidated_severity": "high",
+      "consolidated_impact": "These regex patterns are compiled at module level, which is correct. However, the snippet shows PERFORMANCE_PA is truncated - if this pattern is being recompiled per-file in the slicer logic, it would cause O(N) compilations for N files.",
+      "consolidated_recommendation": "Verify PERFORMANCE_RE compilation is at module level (not inside any function). Ensure all regex patterns in slicer.py are compiled once at import time.",
+      "category": "performance"
+    },
+    {
+      "cluster_id": "cluster-022",
+      "primary_finding_id": "perf-003-unbounded-file-reads",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "No streaming for large file reads",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Reads entire file into memory. MAX_FILE_SIZE limit helps, but for files near the limit, this loads potentially megabytes into RAM per file. With parallel processing, memory usage scales as O(N * file_size).",
+      "consolidated_recommendation": "For heuristic scanning (regex matching), stream file line-by-line or in chunks. Most patterns can be detected per-line without loading full file.",
+      "category": "performance"
+    },
+    {
+      "cluster_id": "cluster-023",
+      "primary_finding_id": "perf-006-list-comprehension-in-slicer",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "List comprehensions where generators would suffice",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "Creates intermediate list just for membership checking. For N snippets, allocates O(N) list when generator expression would work.",
+      "consolidated_recommendation": "Use generator expression if only iterating once: `any('danger' in s.path for s in snippets)` instead of building list first.",
+      "category": "performance"
+    },
+    {
+      "cluster_id": "cluster-024",
+      "primary_finding_id": "concurrency-high-001",
+      "related_finding_ids": [
+        "perf-007-repeated-env-file-parsing"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Potential blocking I/O in async context with Path.read_text",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Path.read_text() is synchronous blocking I/O. If called inside an async function (e.g. wrapped in an async CLI handler), it blocks the event loop, degrading concurrency and responsiveness. This pattern appears in a synchronous _load_env() context here, but if this code is invoked from an async entry point, it will block.",
+      "consolidated_recommendation": "If the CLI runs in an async context (e.g. typer with async commands), use aiofiles or asyncio.to_thread() to offload file reads. If CLI is purely synchronous, this is acceptable but document that async code should not call _load_env().",
+      "category": "concurrency"
+    },
+    {
+      "cluster_id": "cluster-025",
+      "primary_finding_id": "perf-008-string-concatenation-in-markdown",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Repeated string concatenation for report rendering",
+      "consolidated_severity": "low",
+      "consolidated_impact": "Uses list for lines (good), but if there are many string concatenations with '+' elsewhere in markdown rendering, it could be O(N^2). Current code looks fine (list-based).",
+      "consolidated_recommendation": "Verify final markdown assembly uses ''.join(lines) not repeated '+=' operations.",
+      "category": "performance"
+    },
+    {
+      "cluster_id": "cluster-026",
+      "primary_finding_id": "perf-009-llm-context-truncation",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Simple truncation instead of smart chunking",
+      "consolidated_severity": "low",
+      "consolidated_impact": "Simple prefix truncation may cut off important code at the end of large codebases. Not a performance issue per se, but affects analysis quality.",
+      "consolidated_recommendation": "Implement smart chunking: prioritize high-risk files, distribute budget across files, or use sliding window with overlap.",
+      "category": "performance"
+    },
+    {
+      "cluster_id": "cluster-027",
+      "primary_finding_id": "quality-005",
+      "related_finding_ids": [
+        "doc-007"
+      ],
+      "match_confidence": 0.8,
+      "consolidated_title": "Long function in osv.py spanning lines 68-212 (144 lines)",
+      "consolidated_severity": "high",
+      "consolidated_impact": "144-line function mixing file reading, ecosystem detection, multiple parsing branches, and aggregation logic. Hard to unit test each parsing format independently.",
+      "consolidated_recommendation": "Already partially split with _parse_* functions. Extract the main loop logic into parse_dependency_file(filepath, content) and a coordinator function.",
+      "category": "quality"
+    },
+    {
+      "cluster_id": "cluster-028",
+      "primary_finding_id": "quality-016",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Unused variable 'call_count' in test mock (test_llm.py)",
+      "consolidated_severity": "low",
+      "consolidated_impact": "call_count is incremented but the test doesn't assert its final value. May indicate incomplete test or dead code.",
+      "consolidated_recommendation": "Add assertion after the test: assert call_count == 3 to verify retry logic worked as expected.",
+      "category": "quality"
+    },
+    {
+      "cluster_id": "cluster-029",
+      "primary_finding_id": "doc-001",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "README missing installation and usage sections",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Users cannot install or run the tool without searching code. Critical for a published package MVP.",
+      "consolidated_recommendation": "Add ## Installation section with pip install command and ## Usage section with basic CLI examples",
+      "category": "documentation"
+    },
+    {
+      "cluster_id": "cluster-030",
+      "primary_finding_id": "doc-002",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Public BaseAgent class missing docstrings",
+      "consolidated_severity": "high",
+      "consolidated_impact": "Core extensibility point for adding agents lacks API documentation. Developers cannot understand the contract.",
+      "consolidated_recommendation": "Add class-level docstring explaining BaseAgent interface and run() method contract",
+      "category": "documentation"
+    },
+    {
+      "cluster_id": "cluster-031",
+      "primary_finding_id": "doc-010",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "HTML report generation missing inline examples",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "Module docstring describes output but lacks usage example. Unclear what parameters render_html accepts.",
+      "consolidated_recommendation": "Add function-level docstring with parameter descriptions and usage example",
+      "category": "documentation"
+    },
+    {
+      "cluster_id": "cluster-032",
+      "primary_finding_id": "doc-011",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Schema classes lack field descriptions",
+      "consolidated_severity": "medium",
+      "consolidated_impact": "Core data structures lack docstrings. API consumers cannot understand field semantics without reading code.",
+      "consolidated_recommendation": "Add class-level docstrings and Field descriptions for all Pydantic models",
+      "category": "documentation"
+    },
+    {
+      "cluster_id": "cluster-033",
+      "primary_finding_id": "concurrency-critical-002",
+      "related_finding_ids": [],
+      "match_confidence": 1.0,
+      "consolidated_title": "Race condition in set_concurrency with global state reset",
+      "consolidated_severity": "critical",
+      "consolidated_impact": "Setting _LLM_SEMAPHORE to None while other tasks may be acquiring it in _get_semaphore() creates a race condition. If one task is in the middle of checking `if _LLM_SEMAPHORE is None:` while another calls set_concurrency(), the semaphore can be reset mid-flight, causing tasks to bypass concurrency limits or deadlock.",
+      "consolidated_recommendation": "Protect set_concurrency() and _get_semaphore() with the same asyncio.Lock. Ensure semaphore updates are atomic and no task can observe partial state.",
+      "category": "concurrency"
+    }
+  ],
+  "all_findings": [
+    {
+      "id": "functional-heur-2",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: TODO_FIXME",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          128
+        ],
+        "snippet": "# TODO_FIXME"
+      },
+      "impact": "Pattern TODO_FIXME detected at codeval/heuristics.py:128",
+      "recommendation": "Review and address TODO_FIXME pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "functional"
+    },
+    {
+      "id": "func-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "No discoverable entrypoints found in codebase",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          195
+        ],
+        "snippet": "def _is_entrypoint(path: Path) -> bool:\n    \"\"\"Check if path is an entrypoint.\"\"\"\n    return path.name in ENTRYPOINT_PATTE"
+      },
+      "impact": "Fingerprint analysis reports 'entrypoints=[]', indicating no main entry points are detected. This suggests either entrypoint detection is broken (pattern incomplete in snippet) or the application lacks clear entry points, making it difficult to understand how to run or use the codebase.",
+      "recommendation": "Complete the _is_entrypoint function with proper ENTRYPOINT_PATTERNS. Ensure patterns include common entrypoints like __main__.py, main.py, app.py, cli.py, manage.py, etc. Verify codeval/cli.py is detected as an entrypoint since it contains the CLI app definition.",
+      "patch_hint": "Fix incomplete ENTRYPOINT_PATTE reference and ensure ENTRYPOINT_PATTERNS list is comprehensive",
+      "test_hint": "Add test case verifying codeval/cli.py is detected as entrypoint",
+      "source": "functional"
+    },
+    {
+      "id": "func-002",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Incomplete TODO in production heuristics code",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          128
+        ],
+        "snippet": "# TODO_FIXME"
+      },
+      "impact": "Production heuristics module contains unfinished work marker. The TODO_FIXME pattern itself appears to be incomplete or placeholder code, suggesting the heuristics detection may not be fully implemented or tested.",
+      "recommendation": "Complete the TODO_FIXME heuristic implementation. Verify pattern matching works correctly and add test coverage for detecting TODO/FIXME comments in analyzed codebases.",
+      "patch_hint": "Complete the heuristic pattern and ensure it's properly integrated into the analysis flow",
+      "test_hint": "Add test case with sample code containing TODO and FIXME comments, verify they're detected",
+      "source": "functional"
+    },
+    {
+      "id": "func-003",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Missing timeout parameter validation in heuristics",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          20,
+          65
+        ],
+        "snippet": "(\"MISSING_TIMEOUT\", r\"(requests\\.(get|post|put|delete|patch)|socket\\.create_connection|urllib\\.request\\.urlopen)\\s*\\([^)]*(?!timeout)\", \"resilience\"),"
+      },
+      "impact": "The MISSING_TIMEOUT heuristic pattern uses negative lookahead (?!timeout) which may not correctly detect missing timeout parameters in all cases. The pattern attempts to match function calls without 'timeout' in the arguments, but this approach is fragile and may produce false positives/negatives.",
+      "recommendation": "Refactor MISSING_TIMEOUT detection to use AST parsing instead of regex for more accurate detection. The current regex-based approach cannot reliably determine if timeout parameter is present in complex function calls.",
+      "patch_hint": "Replace regex pattern with AST-based analysis that checks function call keyword arguments",
+      "test_hint": "Add test cases with requests.get() calls with and without timeout, including edge cases like timeout=None, timeout in **kwargs",
+      "source": "functional"
+    },
+    {
+      "id": "func-004",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Incomplete SQL injection detection pattern",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          25
+        ],
+        "snippet": "(\"SQL_CONCAT\", r\"(execute|executemany|raw)\\s*\\([^)]*%s|format\\s*\\([^)]*\\)\\s*\\)\\s*\\)|f['\\\"].*SELECT|f['\\\"].*INSERT|f['\\\"].*UPDATE|f['\\\"].*DELETE\", \"security\"),"
+      },
+      "impact": "SQL_CONCAT pattern is overly complex and may miss common SQL injection patterns. The regex attempts to detect multiple patterns in one expression, making it difficult to maintain and test. May produce false positives on legitimate format strings.",
+      "recommendation": "Split SQL_CONCAT into separate, well-tested patterns for different SQL injection vectors. Add AST-based validation for f-strings containing SQL keywords to reduce false positives.",
+      "patch_hint": "Break down into: sql_fstring_injection, sql_format_injection, sql_execute_concat patterns",
+      "test_hint": "Add test cases covering f-string SQL, %-formatting SQL, execute() with concatenation, and safe parameterized queries",
+      "source": "functional"
+    },
+    {
+      "id": "func-005",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "Error handling in _read_safe swallows all exceptions",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          195
+        ],
+        "snippet": "except (OSError, UnicodeDecodeError) as e:\n        logger.debug(\"Skip %s: %s\", path, e)\n        return None"
+      },
+      "impact": "The _read_safe function catches OSError and UnicodeDecodeError but only logs at debug level and returns None. This makes it difficult to diagnose why files are being skipped during analysis. Silently skipping files could lead to incomplete validation results.",
+      "recommendation": "Add warning-level logging for skipped files that match important patterns (e.g., entrypoints, test files). Consider tracking and reporting skipped file statistics in the final report so users understand coverage gaps.",
+      "patch_hint": "Add counter for skipped files, log warnings for important files, include skip statistics in report",
+      "test_hint": "Add test verifying skipped files are tracked and reported, test with invalid UTF-8 file",
+      "source": "functional"
+    },
+    {
+      "id": "func-006",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Agent failure handling lacks partial result preservation",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          147
+        ],
+        "snippet": "except Exception as exc:\n            logger.warning(\"Agent %s crashed: %s\", agent.name, exc)\n            _notify(agent.name, \"failed\", str(exc))\n            return AgentReport(agent=agent.name, analyzed=False)"
+      },
+      "impact": "When an agent crashes, all its findings are lost. If an agent partially completes analysis before encountering an error, those findings are discarded. This reduces the value of graceful degradation since partial results could still be useful.",
+      "recommendation": "Modify agent exception handling to preserve any findings collected before the crash. Update AgentReport to support partial results with a 'partial' flag. Include partial findings in final report with appropriate warnings.",
+      "patch_hint": "Add try/except around agent.run() that checks if agent has partial findings before returning empty report",
+      "test_hint": "Add test for agent that collects some findings then raises exception, verify findings are preserved",
+      "source": "functional"
+    },
+    {
+      "id": "func-007",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Environment variable loading has multiple fallback mechanisms",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "if not os.environ.get(\"ANTHROPIC_API_KEY\", \"\").strip():\n                try:\n                    raw = env_path.read_text(encoding=\"utf-8-sig\").strip()\n                    for line in raw.splitlines():\n                        line = line.strip()\n                        if line and not line.startswith(\"#\") and \"=\" in line:\n                            k, _, v = line.partition(\"=\")\n                            k, v = k.strip(), v.strip().strip('\"\\'')\n                            if k and v and v != \"your-api-key-here\":\n                                os.environ[k] = v\n                except Exception:\n                    pass"
+      },
+      "impact": "The environment loading code has manual fallback parsing that duplicates dotenv functionality. The bare 'except Exception: pass' swallows errors silently, making debugging difficult. The special handling for 'your-api-key-here' suggests common user error that could be better handled.",
+      "recommendation": "Simplify environment loading by relying primarily on python-dotenv. If manual parsing is needed for edge cases, log warnings when it's triggered. Add validation that provides clear error messages when API keys are invalid placeholders.",
+      "patch_hint": "Remove manual parsing fallback, add explicit validation for placeholder API keys with helpful error messages",
+      "test_hint": "Add test with .env containing UTF-8 BOM, placeholder key, malformed lines",
+      "source": "functional"
+    },
+    {
+      "id": "func-008",
+      "severity": "low",
+      "confidence": 0.85,
+      "title": "LLM context truncation loses information without warning",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          176
+        ],
+        "snippet": "def _truncate_context(text: str, max_chars: int = MAX_CONTEXT_CHARS) -> str:\n    \"\"\"Truncate context to fit token limits.\"\"\"\n    if len(text) <= max_chars:\n        return text\n    return text[: max_chars - 100] + \"\\n"
+      },
+      "impact": "Context truncation silently cuts off text when it exceeds MAX_CONTEXT_CHARS. Users and agents are not notified that analysis is incomplete. Large files or many files may be partially analyzed without indication, leading to false confidence in results.",
+      "recommendation": "Add logging when context is truncated, include truncation statistics in agent reports. Consider implementing smarter truncation that preserves file boundaries or includes truncation markers in the context sent to LLM.",
+      "patch_hint": "Log warning with bytes/files truncated, add truncation_occurred flag to AgentReport",
+      "test_hint": "Add test verifying truncation is logged and reported when context exceeds limit",
+      "source": "functional"
+    },
+    {
+      "id": "security-heur-3",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "Static heuristic: SQL_CONCAT",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          25
+        ],
+        "snippet": "(\"SQL_CONCAT\", r\"(execute|executemany|raw)\\s*\\([^)]*%s|format\\s*\\([^)]*\\)\\s*\\)\\s*\\)|f['\\\"].*SELECT|f['\\\"].*INSERT|f['\\\"].*UPDATE|f['\\\"].*DELETE\", \"security\"),"
+      },
+      "impact": "Pattern SQL_CONCAT detected at codeval/heuristics.py:25",
+      "recommendation": "Review and address SQL_CONCAT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-4",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "Static heuristic: SQL_CONCAT",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          30
+        ],
+        "snippet": "# SQL concat: f-strings or % with SQL keywords, or execute(+ var)"
+      },
+      "impact": "Pattern SQL_CONCAT detected at codeval/heuristics.py:30",
+      "recommendation": "Review and address SQL_CONCAT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-11",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "Static heuristic: EVAL_EXEC",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          28
+        ],
+        "snippet": "\"x = eval(user_input)\\n\""
+      },
+      "impact": "Pattern EVAL_EXEC detected at tests/conftest.py:28",
+      "recommendation": "Review and address EVAL_EXEC pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-12",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          26
+        ],
+        "snippet": "\"\"\"Repo with eval, except:, shell=True for slicer/heuristics tests.\"\"\""
+      },
+      "impact": "Pattern SHELL_TRUE detected at tests/conftest.py:26",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-13",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          30
+        ],
+        "snippet": "\"subprocess.run('ls', shell=True)\\n\""
+      },
+      "impact": "Pattern SHELL_TRUE detected at tests/conftest.py:30",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-14",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "tests/test_orchestrator.py",
+        "lines": [
+          22
+        ],
+        "snippet": "# Should have heuristic-based findings (eval, shell=True, except)"
+      },
+      "impact": "Pattern SHELL_TRUE detected at tests/test_orchestrator.py:22",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-15",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "tests/test_slicer.py",
+        "lines": [
+          35
+        ],
+        "snippet": "# danger.py has eval, shell=True - should be included"
+      },
+      "impact": "Pattern SHELL_TRUE detected at tests/test_slicer.py:35",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "security-heur-17",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Static heuristic: SHELL_TRUE",
+      "evidence": {
+        "file": "codeval/agents/security.py",
+        "lines": [
+          17
+        ],
+        "snippet": "- subprocess with shell=True"
+      },
+      "impact": "Pattern SHELL_TRUE detected at codeval/agents/security.py:17",
+      "recommendation": "Review and address SHELL_TRUE pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "security"
+    },
+    {
+      "id": "SEC-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Code injection via eval() with user input",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          27
+        ],
+        "snippet": "x = eval(user_input)"
+      },
+      "impact": "Arbitrary code execution. An attacker can execute malicious Python code by controlling user_input, leading to complete system compromise.",
+      "recommendation": "Never use eval() with untrusted input. Use ast.literal_eval() for safe evaluation of Python literals, or implement a whitelist-based parser for your use case.",
+      "patch_hint": "Replace eval(user_input) with ast.literal_eval(user_input) or a domain-specific parser",
+      "test_hint": "Test with malicious inputs like __import__('os').system('whoami') to verify the vulnerability is fixed",
+      "source": "security"
+    },
+    {
+      "id": "SEC-002",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Command injection via shell=True in subprocess",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          30
+        ],
+        "snippet": "subprocess.run('ls', shell=True)"
+      },
+      "impact": "Command injection vulnerability. While this example uses a static string, shell=True enables shell interpretation and can lead to command injection if any part of the command is user-controlled.",
+      "recommendation": "Remove shell=True and pass command as a list: subprocess.run(['ls']). If shell features are needed, use shlex.quote() to escape user inputs.",
+      "patch_hint": "Change to subprocess.run(['ls'], shell=False) or subprocess.run(['ls'])",
+      "test_hint": "Test with user-controlled input like 'ls; rm -rf /' to verify shell injection is prevented",
+      "source": "security"
+    },
+    {
+      "id": "SEC-003",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "SQL injection patterns detected in heuristics",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          25,
+          30,
+          31,
+          32,
+          33,
+          34
+        ],
+        "snippet": "SQL_CONCAT\", r\"(execute|executemany|raw)\\s*\\([^)]*%s|format\\s*\\([^)]*\\)\\s*\\)\\s*\\)|f['\\\"].*SELECT|f['\\\"].*INSERT|f['\\\"].*UPDATE|f['\\\"].*DELETE"
+      },
+      "impact": "The regex patterns for SQL injection detection are defined but their effectiveness depends on implementation. String concatenation or f-strings with SQL queries enable SQL injection attacks.",
+      "recommendation": "Use parameterized queries exclusively. For Python: cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)). Never concatenate user input into SQL strings.",
+      "patch_hint": "Review all execute/executemany calls to ensure they use parameterized queries with placeholders",
+      "test_hint": "Test with SQL injection payloads like ' OR '1'='1 to verify parameterization blocks attacks",
+      "source": "security"
+    },
+    {
+      "id": "SEC-004",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "Unsafe deserialization pattern detection",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          26
+        ],
+        "snippet": "UNSAFE_DESERIALIZE\", r\"(pickle\\.loads|yaml\\.unsafe_load|marshal\\.loads)\\s*\\("
+      },
+      "impact": "Pickle, yaml.unsafe_load, and marshal.loads can execute arbitrary code during deserialization. If used with untrusted data, attackers can achieve remote code execution.",
+      "recommendation": "Avoid pickle/marshal for untrusted data. Use json for data exchange. For YAML, use yaml.safe_load() instead of yaml.unsafe_load(). Consider safer serialization formats like JSON or Protocol Buffers.",
+      "patch_hint": "Replace pickle.loads with json.loads, yaml.unsafe_load with yaml.safe_load",
+      "test_hint": "Test deserialization with crafted payloads that attempt code execution",
+      "source": "security"
+    },
+    {
+      "id": "SEC-005",
+      "severity": "medium",
+      "confidence": 0.7,
+      "title": "Missing input validation on user input collection",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          27,
+          28
+        ],
+        "snippet": "input\\s*\\(|raw_input\\s*\\("
+      },
+      "impact": "Direct use of input() without validation can lead to injection attacks if the input is used in sensitive operations like eval, exec, os.system, or SQL queries.",
+      "recommendation": "Always validate and sanitize user input. Use whitelist validation, type checking, and length limits. Never pass raw input to dangerous functions like eval, exec, or shell commands.",
+      "patch_hint": "Add input validation: validated_input = validate_and_sanitize(input())",
+      "test_hint": "Test with malicious inputs containing special characters, quotes, and code injection payloads",
+      "source": "security"
+    },
+    {
+      "id": "resilience-heur-0",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          32
+        ],
+        "snippet": "except Exception:"
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at codeval/cli.py:32",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-1",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          239
+        ],
+        "snippet": "except Exception as e:"
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at codeval/cli.py:239",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-5",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          184
+        ],
+        "snippet": "except Exception as e:"
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at codeval/llm.py:184",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-6",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          142
+        ],
+        "snippet": "except Exception as exc:"
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at codeval/orchestrator.py:142",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-7",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          237
+        ],
+        "snippet": "except Exception as e:"
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at codeval/osv.py:237",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-8",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Static heuristic: BARE_EXCEPT",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          26
+        ],
+        "snippet": "\"\"\"Repo with eval, except:, shell=True for slicer/heuristics tests.\"\"\""
+      },
+      "impact": "Pattern BARE_EXCEPT detected at tests/conftest.py:26",
+      "recommendation": "Review and address BARE_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-9",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Static heuristic: BARE_EXCEPT",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          35
+        ],
+        "snippet": "\"except:\\n\""
+      },
+      "impact": "Pattern BARE_EXCEPT detected at tests/conftest.py:35",
+      "recommendation": "Review and address BARE_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-10",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Static heuristic: BROAD_EXCEPT",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          37
+        ],
+        "snippet": "\"except Exception as e:\\n\""
+      },
+      "impact": "Pattern BROAD_EXCEPT detected at tests/conftest.py:37",
+      "recommendation": "Review and address BROAD_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "resilience-heur-16",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Static heuristic: BARE_EXCEPT",
+      "evidence": {
+        "file": "codeval/agents/resilience.py",
+        "lines": [
+          15
+        ],
+        "snippet": "- Bare except (except:)"
+      },
+      "impact": "Pattern BARE_EXCEPT detected at codeval/agents/resilience.py:15",
+      "recommendation": "Review and address BARE_EXCEPT pattern",
+      "patch_hint": "",
+      "test_hint": "",
+      "source": "resilience"
+    },
+    {
+      "id": "res-cli-broad-except-env-1",
+      "severity": "high",
+      "confidence": 0.95,
+      "title": "Overly broad exception handler swallows .env parsing errors",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          32
+        ],
+        "snippet": "except Exception:\n    pass"
+      },
+      "impact": "Silent failures when loading environment variables from .env files. Critical API keys may fail to load without any indication, causing downstream authentication failures that are difficult to debug.",
+      "recommendation": "Catch specific exceptions (IOError, UnicodeDecodeError, ValueError) and log warnings when .env parsing fails. This maintains graceful degradation while providing visibility into configuration issues.",
+      "patch_hint": "Replace 'except Exception:' with 'except (IOError, UnicodeDecodeError) as e:' and add logging: logger.warning('Failed to parse .env: %s', e)",
+      "test_hint": "Add test cases for malformed .env files, missing files, and encoding errors to verify proper error handling and logging",
+      "source": "resilience"
+    },
+    {
+      "id": "res-cli-broad-except-main-2",
+      "severity": "medium",
+      "confidence": 0.85,
+      "title": "Broad exception handler in CLI main masks all runtime errors",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          239
+        ],
+        "snippet": "except Exception as e:\n    typer.echo(f\"Error: {e}\", err=True)"
+      },
+      "impact": "All unhandled exceptions during validation are caught and reduced to a generic error message. This hides stack traces and makes debugging production issues significantly harder, especially for unexpected errors.",
+      "recommendation": "Only catch specific expected exceptions (ValidationError, ConfigurationError). Let unexpected exceptions propagate with full stack traces, or add a --debug flag to control verbosity.",
+      "patch_hint": "Add specific exception types: 'except (ValidationError, FileNotFoundError) as e:' and let other exceptions propagate or add: 'if debug: raise' before the generic handler",
+      "test_hint": "Test that unexpected exceptions (e.g., KeyError, AttributeError) produce useful stack traces when --debug is enabled",
+      "source": "resilience"
+    },
+    {
+      "id": "res-orchestrator-agent-crash-3",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Agent crashes swallowed without retry or proper error propagation",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          142
+        ],
+        "snippet": "except Exception as exc:\n    logger.warning(\"Agent %s crashed: %s\", agent.name, exc)\n    _notify(agent.name, \"failed\", str(exc))\n    return AgentReport(agent=agent.name, analyzed=False)"
+      },
+      "impact": "Transient failures (network timeouts, rate limits, temporary resource exhaustion) are treated the same as permanent failures. No retry logic means agents fail unnecessarily, reducing analysis quality.",
+      "recommendation": "Implement exponential backoff retry for transient errors (rate limits, network issues). Only catch and swallow exceptions after retry exhaustion. Consider circuit breaker pattern for repeated failures.",
+      "patch_hint": "Add retry decorator with exponential backoff: '@retry(max_attempts=3, backoff=2.0, exceptions=(RateLimitError, NetworkError))' or use tenacity library",
+      "test_hint": "Mock transient failures and verify retry behavior. Test that permanent failures (ValueError, TypeError) don't trigger retries",
+      "source": "resilience"
+    },
+    {
+      "id": "res-llm-missing-timeout-4",
+      "severity": "high",
+      "confidence": 0.92,
+      "title": "LLM API calls lack timeout configuration",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          176
+        ],
+        "snippet": "OPENAI_API_URL = \"https://api.openai.com/v1/chat/completions\"\n..."
+      },
+      "impact": "API calls to OpenAI and Anthropic can hang indefinitely if the service is slow or unresponsive. This blocks the entire async workflow and can cause the validation process to stall without any indication of the problem.",
+      "recommendation": "Add explicit timeout parameters to all HTTP requests (60-120 seconds for LLM calls). Use asyncio.timeout or httpx timeout configuration to enforce maximum wait times.",
+      "patch_hint": "Add timeout to API client initialization: 'httpx.AsyncClient(timeout=120.0)' or wrap calls with 'async with asyncio.timeout(120):' for async operations",
+      "test_hint": "Mock slow API responses (sleep 200s) and verify timeout exception is raised and handled appropriately",
+      "source": "resilience"
+    },
+    {
+      "id": "res-osv-silent-parse-fail-5",
+      "severity": "medium",
+      "confidence": 0.88,
+      "title": "Dependency file parsing errors silently ignored",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          237
+        ],
+        "snippet": "except Exception as e:\n    return pkgs"
+      },
+      "impact": "Malformed dependency files (package.json, requirements.txt, etc.) fail to parse silently, resulting in incomplete vulnerability scanning. Critical dependencies may be missed without any warning to the user.",
+      "recommendation": "Catch specific parsing exceptions (json.JSONDecodeError, toml.TOMLDecodeError) and log warnings with file paths. Return partial results but indicate parsing failures in the report.",
+      "patch_hint": "Replace with 'except (json.JSONDecodeError, ValueError) as e:' and add 'logger.warning(\"Failed to parse %s: %s\", source, e)' before returning",
+      "test_hint": "Create test cases with malformed JSON, TOML, and other dependency formats. Verify warnings are logged and partial results are returned",
+      "source": "resilience"
+    },
+    {
+      "id": "perf-001-blocking-read-loop",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Blocking file I/O in potential async context",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          74,
+          75
+        ],
+        "snippet": "try:\n            content = full_path.read_text(encoding=\"utf-8\", errors=\"replace\")\n        except OSError:\n            continue"
+      },
+      "impact": "Synchronous file reads inside a loop that processes dependency files. If this runs in an async context (as suggested by asyncio usage in orchestrator.py), each blocking read will stall the event loop. With N dependency files, this creates O(N) blocking operations that could be parallelized with asyncio.to_thread or aiofiles.",
+      "recommendation": "Use async file I/O: `content = await asyncio.to_thread(full_path.read_text, encoding='utf-8', errors='replace')` or use aiofiles library. Alternatively, parallelize the file reads using asyncio.gather if multiple dependency files exist.",
+      "patch_hint": "async def _read_dep_file_async(path: Path) -> str | None:\n    return await asyncio.to_thread(path.read_text, encoding='utf-8', errors='replace')\n\n# Then in loop:\ncontent = await _read_dep_file_async(full_path)\nif content is None:\n    continue",
+      "test_hint": "Benchmark with 50+ dependency files to measure improvement from async I/O",
+      "source": "performance"
+    },
+    {
+      "id": "perf-002-repeated-regex-compilation",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Regex compilation inside hot path",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          89,
+          90,
+          91
+        ],
+        "snippet": "SECURITY_RE = re.compile(\"|\".join(f\"({p})\" for p in SECURITY_PATTERNS), re.IGNORECASE)\nERROR_RE = re.compile(\"|\".join(f\"({p})\" for p in ERROR_HANDLING_PATTERNS))\nPERFORMANCE_RE = re.compile(\"|\".join(f\"({p})\" for p in PERFORMANCE_PA"
+      },
+      "impact": "These regex patterns are compiled at module level, which is correct. However, the snippet shows PERFORMANCE_PA is truncated - if this pattern is being recompiled per-file in the slicer logic, it would cause O(N) compilations for N files.",
+      "recommendation": "Verify PERFORMANCE_RE compilation is at module level (not inside any function). Ensure all regex patterns in slicer.py are compiled once at import time.",
+      "patch_hint": "# At module level (current location is correct):\nPERFORMANCE_RE = re.compile(\"|\".join(f\"({p})\" for p in PERFORMANCE_PATTERNS))\n# Never re-compile inside loops",
+      "test_hint": "Profile slicer.py with 100+ files to ensure regex compilation time is constant",
+      "source": "performance"
+    },
+    {
+      "id": "perf-003-unbounded-file-reads",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "No streaming for large file reads",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          45,
+          49
+        ],
+        "snippet": "def _read_safe(path: Path, max_size: int = MAX_FILE_SIZE) -> str | None:\n    \"\"\"Read file safely.\"\"\"\n    try:\n        size = path.stat().st_size\n        if size > max_size:\n            return None\n        with open(path, \"r\", encoding=\"utf-8\", errors=\"strict\") as f"
+      },
+      "impact": "Reads entire file into memory. MAX_FILE_SIZE limit helps, but for files near the limit, this loads potentially megabytes into RAM per file. With parallel processing, memory usage scales as O(N * file_size).",
+      "recommendation": "For heuristic scanning (regex matching), stream file line-by-line or in chunks. Most patterns can be detected per-line without loading full file.",
+      "patch_hint": "def _scan_file_streaming(path: Path, patterns: list[tuple]) -> list:\n    results = []\n    with open(path, 'r', encoding='utf-8', errors='strict') as f:\n        for line_num, line in enumerate(f, 1):\n            for name, pattern, category in patterns:\n                if re.search(pattern, line):\n                    results.append((name, line_num, line.strip()))\n    return results",
+      "test_hint": "Test with 10MB files to verify memory usage stays constant",
+      "source": "performance"
+    },
+    {
+      "id": "perf-004-sequential-agent-file-reads",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Sequential file reading in orchestrator",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          141
+        ],
+        "snippet": "try:\n            report = await agent.run(fingerprint, files, heuristics, llm_enabled)\n            n = len(report.findings)\n            status = \"done\" if report.analyzed else \"failed\"\n            _notify(agent.name, status, f\"{n} findings\")\n            return report"
+      },
+      "impact": "Agents run in parallel (asyncio.gather), but if each agent reads the same files sequentially, file I/O becomes a bottleneck. With M agents and N files, worst case is M*N sequential reads.",
+      "recommendation": "Pre-load all file contents once before spawning agents, or implement a shared file cache. Pass file contents (not paths) to agents.",
+      "patch_hint": "# Before spawning agents:\nfile_cache = {}\nfor snippet in files:\n    if snippet.path not in file_cache:\n        file_cache[snippet.path] = await asyncio.to_thread(Path(snippet.path).read_text)\n\n# Pass cache to agents\nreport = await agent.run(fingerprint, files, heuristics, llm_enabled, file_cache=file_cache)",
+      "test_hint": "Benchmark with 50 files and 5 agents to measure I/O reduction",
+      "source": "performance"
+    },
+    {
+      "id": "perf-005-fingerprint-binary-check",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "Binary file detection reads file twice",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          89,
+          92,
+          101
+        ],
+        "snippet": "def _is_binary(path: Path) -> bool:\n    \"\"\"Check if file is likely binary.\"\"\"\n    try:\n        with open(path, \"rb\") as f:\n            chunk = f.read(32)\n        for sig in BINARY_SIGNATURES:\n            if chunk.startswith(sig):\n                return True"
+      },
+      "impact": "Binary check opens file, then _read_safe opens it again. For N files, this doubles I/O syscalls. Minor impact per file but scales linearly.",
+      "recommendation": "Combine binary check with initial read: try text decode on first chunk, cache result, avoid reopening.",
+      "patch_hint": "def _read_with_binary_check(path: Path, max_size: int) -> tuple[bool, str | None]:\n    try:\n        with open(path, 'rb') as f:\n            chunk = f.read(32)\n            if b'\\x00' in chunk or any(chunk.startswith(sig) for sig in BINARY_SIGNATURES):\n                return (True, None)\n            # Read rest as text\n            f.seek(0)\n            content = f.read(max_size).decode('utf-8')\n            return (False, content)\n    except:\n        return (True, None)",
+      "test_hint": "Profile fingerprinting on 1000+ files to measure I/O reduction",
+      "source": "performance"
+    },
+    {
+      "id": "perf-006-list-comprehension-in-slicer",
+      "severity": "medium",
+      "confidence": 0.7,
+      "title": "List comprehensions where generators would suffice",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          30
+        ],
+        "snippet": "paths = [s.path for s in snippets]"
+      },
+      "impact": "Creates intermediate list just for membership checking. For N snippets, allocates O(N) list when generator expression would work.",
+      "recommendation": "Use generator expression if only iterating once: `any('danger' in s.path for s in snippets)` instead of building list first.",
+      "patch_hint": "# Instead of:\npaths = [s.path for s in snippets]\nassert any('danger' in p for p in paths)\n\n# Use:\nassert any('danger' in s.path for s in snippets)",
+      "test_hint": "Not critical, but reduces allocations in test code",
+      "source": "performance"
+    },
+    {
+      "id": "perf-007-repeated-env-file-parsing",
+      "severity": "medium",
+      "confidence": 0.65,
+      "title": "Environment file parsed manually after dotenv",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          21,
+          23,
+          26
+        ],
+        "snippet": "load_dotenv(env_path, override=True)\n            # Fallback: manual parse if dotenv didn't load (encoding/BOM issues)\n            if not os.environ.get(\"ANTHROPIC_API_KEY\", \"\").strip():\n                try:\n                    raw = env_path.read_text(encoding=\"utf-8-sig\").strip()\n                    for line in raw.splitlines():"
+      },
+      "impact": "Reads and parses .env file twice: once via load_dotenv, then manually. For large .env files, this doubles parsing work.",
+      "recommendation": "Check if dotenv loaded successfully before manual parse. Or skip load_dotenv entirely if manual parsing is more robust.",
+      "patch_hint": "# Option 1: Check if dotenv worked\nif env_path.exists():\n    load_dotenv(env_path, override=True)\n    if not os.environ.get('ANTHROPIC_API_KEY'):\n        # Only then do manual parse\n        ...\n\n# Option 2: Just do manual parse from start\nif env_path.exists():\n    _manual_parse_env(env_path)",
+      "test_hint": "Minor optimization, test with large .env files",
+      "source": "performance"
+    },
+    {
+      "id": "perf-008-string-concatenation-in-markdown",
+      "severity": "low",
+      "confidence": 0.6,
+      "title": "Repeated string concatenation for report rendering",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          42,
+          43,
+          47
+        ],
+        "snippet": "lines = [\n        \"# Code Validation Report\",\n        \"\",\n        report.summary,\n        \"\",\n        \"## Scores\",\n        \"\",\n        f\"- **Overall**: {report.scores.overall:.2f}/100\","
+      },
+      "impact": "Uses list for lines (good), but if there are many string concatenations with '+' elsewhere in markdown rendering, it could be O(N^2). Current code looks fine (list-based).",
+      "recommendation": "Verify final markdown assembly uses ''.join(lines) not repeated '+=' operations.",
+      "patch_hint": "# Good (current pattern):\nlines = [...]\nreturn '\\n'.join(lines)\n\n# Bad (avoid):\nresult = ''\nfor line in lines:\n    result += line + '\\n'  # O(N^2)",
+      "test_hint": "Profile with reports containing 1000+ findings",
+      "source": "performance"
+    },
+    {
+      "id": "perf-009-llm-context-truncation",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Simple truncation instead of smart chunking",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          48,
+          51,
+          52
+        ],
+        "snippet": "def _truncate_context(text: str, max_chars: int = MAX_CONTEXT_CHARS) -> str:\n    \"\"\"Truncate context to fit token limits.\"\"\"\n    if len(text) <= max_chars:\n        return text\n    return text[: max_chars - 100] + \"\\n"
+      },
+      "impact": "Simple prefix truncation may cut off important code at the end of large codebases. Not a performance issue per se, but affects analysis quality.",
+      "recommendation": "Implement smart chunking: prioritize high-risk files, distribute budget across files, or use sliding window with overlap.",
+      "patch_hint": "def _truncate_smart(snippets: list, max_chars: int) -> str:\n    # Sort by priority (security patterns, entry points)\n    sorted_snippets = sorted(snippets, key=lambda s: s.priority, reverse=True)\n    result = []\n    budget = max_chars\n    for snip in sorted_snippets:\n        if len(snip.content) <= budget:\n            result.append(snip.content)\n            budget -= len(snip.content)\n    return '\\n---\\n'.join(result)",
+      "test_hint": "Test LLM analysis quality on large repos",
+      "source": "performance"
+    },
+    {
+      "id": "perf-010-test-async-gather-overhead",
+      "severity": "low",
+      "confidence": 0.5,
+      "title": "Potential asyncio.gather overhead with many agents",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          147
+        ],
+        "snippet": "reports: list[AgentReport] = await asyncio.gather(*[_run_agent(a) for a in agents])"
+      },
+      "impact": "With current agent count (likely <10), asyncio.gather is fine. If agent count grows significantly (50+), consider batching with semaphore.",
+      "recommendation": "Monitor agent count. If it exceeds 20, implement batching with asyncio.Semaphore to limit concurrent agent execution.",
+      "patch_hint": "# If many agents:\nsem = asyncio.Semaphore(10)  # Limit to 10 concurrent agents\n\nasync def _run_agent_limited(agent):\n    async with sem:\n        return await _run_agent(agent)\n\nreports = await asyncio.gather(*[_run_agent_limited(a) for a in agents])",
+      "test_hint": "Benchmark with 50+ mock agents to measure overhead",
+      "source": "performance"
+    },
+    {
+      "id": "quality-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "God function in cli.py _render_markdown exceeds 200 lines",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "def _render_markdown(report: FinalReport) -> str:\n    \"\"\"Render FinalReport to Markdown.\"\"\"\n    lines = [\n        \"# Code Validation Report\",\n        \"\",\n        report.summary,\n        \"\",\n        \"## Scores\",\n        \"\",\n        f\"- **Overall**: {report.scores.overall:.2f}/100\",\n        \"\",\n..."
+      },
+      "impact": "223-line span indicates a monolithic function mixing multiple concerns (markdown rendering, formatting, iteration). Extremely difficult to test, modify, or reuse components.",
+      "recommendation": "Split into smaller functions: render_header(), render_scores(), render_findings_by_agent(), render_questions(), etc. Each should handle one aspect of the report.",
+      "patch_hint": "Extract sections into separate functions, each returning list[str] of lines, then join them in _render_markdown.",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-002",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "DRY violation: duplicate pattern matching code across slicer.py",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          24,
+          118
+        ],
+        "snippet": "SECURITY_PATTERNS = [\n    r\"\\beval\\s*\\(\",\n    r\"\\bexec\\s*\\(\",\n    ...\n]\nERROR_HANDLING_PATTERNS = [\n    r\"\\btry\\s*:\",\n    ...\n]\nPERFORMANCE_PATTERNS = [\n    r\"\\.query\\s*\\(\",\n    ...\n]\nCONCURRENCY_PATTERNS = [\n    r\"\\bthreading\\b\",\n    ...\n]\nAPI_ROUTE_PATTERNS = [\n    r\"@app\\.(route|get|post|put|delete|patch)\",\n    ...\n]\nARCHITECTURE_PATTERNS = [\n    r\"^import\\s\",\n    ...\n]\n\nSECURITY_RE = re.compile(\"|\".join(f\"({p})\" for p in SECURITY_PATTERNS), re.IGNORECASE)\nERROR_RE = re.compile(\"|\".join(f\"({p})\" for p in ERROR_HANDLING_PATTERNS))\nPERFORMANCE_RE = re.compile(\"|\".join(f\"({p})\" for p in PERFORMANCE_PATTERNS))"
+      },
+      "impact": "Same pattern compilation logic repeated 6 times. Any change to how patterns are compiled must be synchronized across all instances.",
+      "recommendation": "Create a helper function compile_patterns(patterns: list[str], flags=0) -> re.Pattern that encapsulates the join and compile logic.",
+      "patch_hint": "def compile_patterns(patterns: list[str], flags=0) -> re.Pattern:\n    return re.compile('|'.join(f'({p})' for p in patterns), flags)\n\nSECURITY_RE = compile_patterns(SECURITY_PATTERNS, re.IGNORECASE)",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-003",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "DRY violation: duplicate pattern lists between heuristics.py and slicer.py",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          20,
+          65
+        ],
+        "snippet": "(\"EVAL_EXEC\", r\"\\b(eval|exec)\\s*\\(\", \"security\"),\n(\"SHELL_TRUE\", r\"shell\\s*=\\s*True\", \"security\"),\n(\"SQL_CONCAT\", r\"(execute|executemany|raw)\\s*\\([^)]*%s|format\\s*\\([^)]*\\)\\s*\\)\\s*\\)|f['\\\"].*SELECT|f['\\\"].*INSERT|f['\\\"].*UPDATE|f['\\\"].*DELETE\", \"security\"),\n(\"UNSAFE_DESERIALIZE\", r\"(pickle\\.loads|yaml\\.unsafe_load|marshal\\.loads)\\s*\\(\", \"security\")"
+      },
+      "impact": "Security patterns are defined in both heuristics.py and slicer.py (SECURITY_PATTERNS). Changes to patterns must be synchronized across files, risking inconsistency.",
+      "recommendation": "Extract all pattern definitions to a shared constants.py or patterns.py module. Import from both heuristics and slicer.",
+      "patch_hint": "Create codeval/patterns.py with SECURITY_PATTERNS, ERROR_PATTERNS, etc. Import in both modules.",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-004",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Function fingerprint_repo in fingerprint.py exceeds 100 lines (spans 86-195)",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          195
+        ],
+        "snippet": "def _is_binary(path: Path) -> bool:\n    \"\"\"Check if file is likely binary.\"\"\"\n    try:\n        with open(path, \"rb\") as f:\n            chunk = f.read(32)\n        for sig in BINARY_SIGNATURES:\n            if chunk.startswith(sig):\n                return True\n        # Check for null bytes\n        if b\"\\x00\" in chunk:\n            return True\n    except OSError:\n        return True\n    return False\n\n\ndef _read_safe(path: Path, max_size: int = MAX_FILE_SIZE_FINGERPRINT) -> str | None:\n    ...\n\ndef _is_test_file(path: Path) -> bool:\n    ...\n\ndef _is_entrypoint(path: Path) -> bool:\n    ..."
+      },
+      "impact": "109-line span suggests the function (likely fingerprint_repo or related) is doing too much: file I/O, binary detection, test detection, entrypoint detection, all in one scope.",
+      "recommendation": "Extract helper functions (_is_binary, _read_safe, _is_test_file, _is_entrypoint) are already present. Verify fingerprint_repo itself is broken into smaller pieces.",
+      "patch_hint": "If fingerprint_repo is the large function, split into: scan_files(), classify_languages(), detect_frameworks(), collect_entrypoints().",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-005",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Long function in osv.py spanning lines 68-212 (144 lines)",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          68,
+          212
+        ],
+        "snippet": "filename = Path(dep_file).name\n        ecosystem = ECOSYSTEM_MAP.get(filename, \"\")\n        if not ecosystem:\n            continue\n\n        try:\n            content = full_path.read_text(encoding=\"utf-8\", errors=\"replace\")\n        except OSError:\n            continue\n\n        if filename == \"package.json\":\n            packages.extend(_parse_package_json(content, dep_file))\n        elif filename == \"requirements.txt\":\n            packages.extend(_parse_requirements_txt(content, dep_file))\n        elif filename == \"Pipfile\":\n            packages.extend(_parse_pipfile(content, dep_file))\n        elif filename == \"go.mod\":\n            packages.extend(_parse_go_mod(content, dep_file))\n        elif filename == \"Cargo.toml\":\n            packages.extend(_parse_cargo_toml(content, dep_file))\n        elif filename in (\"pyproject.toml\", \"setup.cfg\"):\n            packages.extend(_parse_requirements_txt(content, dep_file))\n\n    return packages\n\n\ndef _parse_package_json(content: str, source: str) -> list[PackageInfo]:\n    \"\"\"Parse package.json dependencies.\"\"\"\n    pkgs: list[PackageInfo] = []\n    try:\n        data = json.loads(content)\n    except json.JSONDecodeError:\n        return pkgs\n\n    for section in (\"dependencies\", \"devDependencies\", \"peerDependencies\"):\n        deps = data.get(section, {})\n        if isinstance(deps, dict):\n            for name, version in deps.items():\n                # Strip version prefixes: ^, ~, >=, etc.\n                clean = re.sub(r\"^[\\^~>=<]*\", \""
+      },
+      "impact": "144-line function mixing file reading, ecosystem detection, multiple parsing branches, and aggregation logic. Hard to unit test each parsing format independently.",
+      "recommendation": "Already partially split with _parse_* functions. Extract the main loop logic into parse_dependency_file(filepath, content) and a coordinator function.",
+      "patch_hint": "Move the if/elif chain for filename dispatch into a PARSER_MAP dict: {\"package.json\": _parse_package_json, ...} and call PARSER_MAP.get(filename, lambda c,s: [])(content, dep_file).",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-006",
+      "severity": "medium",
+      "confidence": 0.9,
+      "title": "Magic number 32 in _is_binary function",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          195
+        ],
+        "snippet": "def _is_binary(path: Path) -> bool:\n    \"\"\"Check if file is likely binary.\"\"\"\n    try:\n        with open(path, \"rb\") as f:\n            chunk = f.read(32)"
+      },
+      "impact": "Unexplained literal 32 for binary detection chunk size. Unclear why 32 bytes vs 64 or 128.",
+      "recommendation": "Define BINARY_CHECK_BYTES = 32 as a module constant with a comment explaining the threshold.",
+      "patch_hint": "At module level: BINARY_CHECK_BYTES = 32  # Sufficient to check for binary signatures and null bytes",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-007",
+      "severity": "medium",
+      "confidence": 0.85,
+      "title": "Magic number 30000 for MAX_CONTEXT_CHARS in llm.py",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          176
+        ],
+        "snippet": "MAX_CONTEXT_CHARS = 30_000"
+      },
+      "impact": "Hardcoded 30K char limit without explanation of how it relates to 8K token budget or why not 32K.",
+      "recommendation": "Add a comment explaining the token-to-char ratio assumption: # ~8K tokens * 4 chars/token = 32K, use 30K for safety margin",
+      "patch_hint": "MAX_CONTEXT_CHARS = 30_000  # ~8K tokens * 4 chars/token = 32K, with safety margin",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-008",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Complex conditional in env loading logic (cli.py lines 18-35)",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "for env_path in [cwd / \".env\", pkg_root / \".env\"]:\n        if env_path.exists():\n            load_dotenv(env_path, override=True)\n            # Fallback: manual parse if dotenv didn't load (encoding/BOM issues)\n            if not os.environ.get(\"ANTHROPIC_API_KEY\", \"\").strip():\n                try:\n                    raw = env_path.read_text(encoding=\"utf-8-sig\").strip()\n                    for line in raw.splitlines():\n                        line = line.strip()\n                        if line and not line.startswith(\"#\") and \"=\" in line:\n                            k, _, v = line.partition(\"=\")\n                            k, v = k.strip(), v.strip().strip('\"\\'')\n                            if k and v and v != \"your-api-key-here\":\n                                os.environ[k] = v\n                except Exception:\n                    pass\n            break"
+      },
+      "impact": "Deeply nested logic with 4 levels (for, if, if, try, for, if, if). Difficult to reason about all edge cases.",
+      "recommendation": "Extract the manual parse logic into _parse_env_file(path: Path) -> dict[str, str] function. Simplify the main loop to: if path.exists() and load_dotenv() fails, call _parse_env_file().",
+      "patch_hint": "def _parse_env_file(path: Path) -> dict[str, str]: ...\nfor env_path in [...]:\n    if env_path.exists():\n        load_dotenv(env_path, override=True)\n        if not os.environ.get('ANTHROPIC_API_KEY'):\n            env_vars = _parse_env_file(env_path)\n            os.environ.update(env_vars)",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-009",
+      "severity": "medium",
+      "confidence": 0.85,
+      "title": "Missing type hints in _notify callback (orchestrator.py)",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          147
+        ],
+        "snippet": "def _notify(agent.name, \"running\", \"\")\n        try:\n            report = await agent.run(fingerprint, files, heuristics, llm_enabled)\n            n = len(report.findings)\n            status = \"done\" if report.analyzed else \"failed\"\n            _notify(agent.name, status, f\"{n} findings\")"
+      },
+      "impact": "_notify function is called but not shown in snippet. If it lacks type hints, reduces type safety and IDE autocomplete effectiveness.",
+      "recommendation": "Ensure _notify has signature: def _notify(agent_name: str, status: str, message: str) -> None:",
+      "patch_hint": "Add type hints to _notify function definition",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-010",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "Complex regex pattern in heuristics.py SQL_CONCAT_SIMPLE",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          20,
+          65
+        ],
+        "snippet": "SQL_CONCAT_SIMPLE = re.compile(\n    r\"f['\\\"].*(?:SELECT|INSERT|UPDATE|DELETE)|\"\n    r\"['\\\"].*%(?:s|d).*(?:SELECT|INSERT|UPDATE|DELETE)|\"\n    r\"(?:execute|executemany)\\s*\\([^)]*\\+\",\n    re.IGNORECASE,\n)"
+      },
+      "impact": "Three alternative patterns joined with | operator, hard to read and maintain. A bug in one branch affects the entire regex.",
+      "recommendation": "Split into three separate regex patterns with descriptive names: FSTRING_SQL_RE, PERCENT_SQL_RE, CONCAT_EXECUTE_RE. Check each independently and OR the results.",
+      "patch_hint": "FSTRING_SQL_RE = re.compile(r\"f['\\\"].*(?:SELECT|INSERT|UPDATE|DELETE)\", re.IGNORECASE)\nPERCENT_SQL_RE = re.compile(r\"['\\\"].*%(?:s|d).*(?:SELECT|INSERT|UPDATE|DELETE)\", re.IGNORECASE)\nCONCAT_EXECUTE_RE = re.compile(r\"(?:execute|executemany)\\s*\\([^)]*\\+\")\n\nif FSTRING_SQL_RE.search(line) or PERCENT_SQL_RE.search(line) or CONCAT_EXECUTE_RE.search(line):",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-011",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Function llm.py complete likely exceeds 50 lines (spans 12-176)",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          176
+        ],
+        "snippet": "MAX_CONTEXT_CHARS = 30_000\n\n# OpenAI\nOPENAI_API_URL = \"https://api.openai.com/v1/chat/completions\"\nOPENAI_DEFAULT_MODEL = \"gpt-4o-mini\"\n\n# Anthropic Claude – Sonnet 4.5 supports structured outputs (constrained decoding)\nANTHROPIC_DEFAULT_MODEL = \"claude-sonnet-4-5-20250929\"\n\n# Concurrency limiter: cap parallel LLM calls to avoid 429 rate-limit storms\n_LLM_SEMAPHORE: asyncio.Semaphore | None = None\n_LLM_CONCURRENCY: int = 3\n\n\ndef set_concurrency(n: int) -> None:\n    \"\"\"Override the default LLM concurrency limit (default: 3).\"\"\"\n    global _LLM_SEMAPHORE, _LLM_CONCURRENCY\n    _LLM_CONCURRENCY = max(1, n)\n    _LLM_SEMAPHORE = None  # Reset so it gets re-created lazily\n\n\ndef _get_semaphore() -> asyncio.Semaphore:\n    \"\"\"Lazily create the semaphore (must be done inside a running event loop).\"\"\"\n    global _LLM_SEMAPHORE\n    if _LLM_SEMAPHORE is None:\n        _LLM_SEMAPHORE = asyncio.Semaphore(_LLM_CONCURRENCY)\n    return _LLM_SEMAPHORE\n\n\ndef is_llm_available() -> bool:\n    \"\"\"Check if LLM is configured (OpenAI or Anthropic API key present).\"\"\"\n    return bool(\n        os.environ.get(\"OPENAI_API_KEY\", \"\").strip()\n        or os.environ.get(\"ANTHROPIC_API_KEY\", \"\").strip()\n    )\n\n\ndef _truncate_context(text: str, max_chars: int = MAX_CONTEXT_CHARS) -> str:\n    \"\"\"Truncate context to fit token limits.\"\"\"\n    if len(text) <= max_chars:\n        return text\n    return text[: max_chars - 100] + \"\\n"
+      },
+      "impact": "164-line span likely includes a large complete() function mixing API calls, retry logic, truncation, and error handling.",
+      "recommendation": "Split complete() into: _call_anthropic_api(), _call_openai_api(), _handle_retry(), and a coordinator function.",
+      "patch_hint": "Extract API-specific logic into separate async functions, use a strategy pattern or if/else dispatch based on provider.",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-012",
+      "severity": "low",
+      "confidence": 0.9,
+      "title": "Inconsistent naming: _run_agent uses _notify but function not shown",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          147
+        ],
+        "snippet": "_notify(agent.name, \"running\", \"\")\n        try:\n            report = await agent.run(fingerprint, files, heuristics, llm_enabled)\n            n = len(report.findings)\n            status = \"done\" if report.analyzed else \"failed\"\n            _notify(agent.name, status, f\"{n} findings\")"
+      },
+      "impact": "_notify is called but its definition is not visible in snippet. If it's a module-level function, should be named notify_agent_status for clarity.",
+      "recommendation": "Rename _notify to notify_agent_status or ensure consistent private function conventions across the module.",
+      "patch_hint": "Rename all calls: notify_agent_status(agent.name, \"running\", \"\")",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-013",
+      "severity": "low",
+      "confidence": 0.85,
+      "title": "Magic string 'your-api-key-here' in env parsing (cli.py)",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "if k and v and v != \"your-api-key-here\":"
+      },
+      "impact": "Hardcoded placeholder string without explanation. If the placeholder changes, this check breaks.",
+      "recommendation": "Define PLACEHOLDER_API_KEY = 'your-api-key-here' as a constant or use a more general check like v.startswith('your-').",
+      "patch_hint": "PLACEHOLDER_API_KEY = 'your-api-key-here'\nif k and v and v != PLACEHOLDER_API_KEY:",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-014",
+      "severity": "low",
+      "confidence": 0.8,
+      "title": "Bare exception catch in cli.py env parsing",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "except Exception:\n                    pass"
+      },
+      "impact": "Silent failure on any exception during env file parsing. Makes debugging encoding or syntax issues difficult.",
+      "recommendation": "Log the exception at debug level: logger.debug('Failed to parse env file %s: %s', env_path, exc) or catch specific exceptions.",
+      "patch_hint": "except Exception as exc:\n    logger.debug('Failed to parse env file %s: %s', env_path, exc)",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-015",
+      "severity": "low",
+      "confidence": 0.75,
+      "title": "Global mutable state in llm.py (_LLM_SEMAPHORE, _LLM_CONCURRENCY)",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          176
+        ],
+        "snippet": "_LLM_SEMAPHORE: asyncio.Semaphore | None = None\n_LLM_CONCURRENCY: int = 3\n\n\ndef set_concurrency(n: int) -> None:\n    \"\"\"Override the default LLM concurrency limit (default: 3).\"\"\"\n    global _LLM_SEMAPHORE, _LLM_CONCURRENCY\n    _LLM_CONCURRENCY = max(1, n)\n    _LLM_SEMAPHORE = None"
+      },
+      "impact": "Global variables make testing harder and can cause issues in concurrent test runs. Resets semaphore on concurrency change, but doesn't prevent race conditions.",
+      "recommendation": "Encapsulate state in a class: LLMConfig with get_semaphore() and set_concurrency() methods. Use dependency injection or a singleton pattern.",
+      "patch_hint": "class LLMConfig:\n    def __init__(self):\n        self._concurrency = 3\n        self._semaphore = None\n    def set_concurrency(self, n: int): ...\n    def get_semaphore(self): ...",
+      "test_hint": "",
+      "source": "quality"
+    },
+    {
+      "id": "quality-016",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Unused variable 'call_count' in test mock (test_llm.py)",
+      "evidence": {
+        "file": "tests/test_llm.py",
+        "lines": [
+          85,
+          106
+        ],
+        "snippet": "call_count = 0\n\n        async def _mock_parse(**kwargs):\n            nonlocal call_count\n            call_count += 1\n            if call_count < 3:\n                raise Exception(\"Error 429: rate limit exceeded\")"
+      },
+      "impact": "call_count is incremented but the test doesn't assert its final value. May indicate incomplete test or dead code.",
+      "recommendation": "Add assertion after the test: assert call_count == 3 to verify retry logic worked as expected.",
+      "patch_hint": "After await complete(...): assert call_count == 3, 'Expected exactly 3 attempts'",
+      "test_hint": "Verify the retry backoff logic retried exactly the expected number of times.",
+      "source": "quality"
+    },
+    {
+      "id": "doc-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "README missing installation and usage sections",
+      "evidence": {
+        "file": "README.md",
+        "lines": [
+          3,
+          13
+        ],
+        "snippet": "## Features\n\n- **Fingerprint-based routing**: Detects languages, frameworks, tests, and entrypoints\n- **Static heuristics**: TODO/FIXME, bare except, eval/exec, shell=True, SQL concatenation, unsafe deserialization, missing timeouts\n- **Optional LLM enhancement**: OpenAI-compatible API for deeper analysis (falls back to static-only if no key)\n- **Extensible**: Add new agents via copy/paste + registration\n\n## Requirements"
+      },
+      "impact": "Users cannot install or run the tool without searching code. Critical for a published package MVP.",
+      "recommendation": "Add ## Installation section with pip install command and ## Usage section with basic CLI examples",
+      "patch_hint": "## Installation\n\n```bash\npip install codeval\n```\n\n## Usage\n\n```bash\ncodeval /path/to/repo\ncodeval /path/to/repo --output html\n```",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-002",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Public BaseAgent class missing docstrings",
+      "evidence": {
+        "file": "codeval/agents/base.py",
+        "lines": [
+          1,
+          1
+        ],
+        "snippet": "from codeval.agents.base import BaseAgent"
+      },
+      "impact": "Core extensibility point for adding agents lacks API documentation. Developers cannot understand the contract.",
+      "recommendation": "Add class-level docstring explaining BaseAgent interface and run() method contract",
+      "patch_hint": "class BaseAgent:\n    \"\"\"Base class for specialist code analysis agents.\n    \n    Subclasses must implement run() to analyze code snippets and return AgentReport.\n    Agents receive fingerprint, file snippets, heuristics, and llm_enabled flag.\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-003",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "CLI commands lack help text and examples",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "app = typer.Typer(help=\"Multi-agent code validator\")"
+      },
+      "impact": "Users running --help see minimal guidance. No examples of output formats, LLM flags, or path arguments.",
+      "recommendation": "Add detailed command docstrings with parameter descriptions and usage examples",
+      "patch_hint": "Add @app.command() docstrings:\n\"\"\"Run validation on REPO_PATH.\n\nExamples:\n  codeval ./myproject\n  codeval ./myproject --output html --llm\n  codeval ./myproject --max-files 50 --include '*.py'\n\"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-004",
+      "severity": "high",
+      "confidence": 0.9,
+      "title": "Heuristic patterns lack inline explanations",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          20,
+          65
+        ],
+        "snippet": "HEURISTIC_PATTERNS = [\n    (\"TODO_FIXME\", r\"#\\s*(TODO|FIXME)\", \"functional\"),\n    (\"BARE_EXCEPT\", r\"\\bexcept\\s*:\", \"resilience\"),\n    (\"BROAD_EXCEPT\", r\"\\bexcept\\s+(Exception|BaseException)\\s*:\", \"resilience\"),"
+      },
+      "impact": "Complex regex patterns are opaque. Maintainers cannot understand detection logic without testing.",
+      "recommendation": "Add inline comments explaining what each heuristic detects and why it matters",
+      "patch_hint": "# Catches untyped exception handlers that may hide errors\n(\"BARE_EXCEPT\", r\"\\bexcept\\s*:\", \"resilience\"),\n# Shell injection vector - command strings executed directly\n(\"SHELL_TRUE\", r\"shell\\s*=\\s*True\", \"security\"),",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-005",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "LLM module functions missing type hints for return values",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          176
+        ],
+        "snippet": "def is_llm_available() -> bool:\n    \"\"\"Check if LLM is configured (OpenAI or Anthropic API key present).\"\"\"\n    return bool(\n        os.environ.get(\"OPENAI_API_KEY\", \"\").strip()\n        or os.environ.get(\"ANTHROPIC_API_KEY\", \"\").strip()\n    )"
+      },
+      "impact": "Public API functions like set_concurrency() lack return type hints, reducing type safety and IDE support.",
+      "recommendation": "Add return type hints to all public functions: set_concurrency(n: int) -> None",
+      "patch_hint": "def set_concurrency(n: int) -> None:\n    \"\"\"Override the default LLM concurrency limit (default: 3).\"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-006",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Fingerprint detection logic undocumented",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          195
+        ],
+        "snippet": "def _is_binary(path: Path) -> bool:\n    \"\"\"Check if file is likely binary.\"\"\"\n    try:\n        with open(path, \"rb\") as f:\n            chunk = f.read(32)\n        for sig in BINARY_SIGNATURES:\n            if chunk.startswith(sig):\n                return True"
+      },
+      "impact": "Binary detection algorithm lacks explanation of signatures checked. Future maintainers may break detection.",
+      "recommendation": "Add docstring explaining BINARY_SIGNATURES content and why null bytes indicate binary",
+      "patch_hint": "\"\"\"Check if file is likely binary by inspecting magic bytes.\n\nChecks first 32 bytes against known signatures (PDF, images, executables)\nand scans for null bytes which indicate binary content.\n\"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-007",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "OSV vulnerability scanning lacks API documentation",
+      "evidence": {
+        "file": "codeval/osv.py",
+        "lines": [
+          68,
+          212
+        ],
+        "snippet": "def _parse_package_json(content: str, source: str) -> list[PackageInfo]:\n    \"\"\"Parse package.json dependencies.\"\"\"\n    pkgs: list[PackageInfo] = []"
+      },
+      "impact": "Public parse functions lack parameter and return value documentation. Unclear what PackageInfo contains.",
+      "recommendation": "Add comprehensive docstrings with parameter types and return value descriptions",
+      "patch_hint": "def _parse_package_json(content: str, source: str) -> list[PackageInfo]:\n    \"\"\"Parse package.json dependencies.\n    \n    Args:\n        content: Raw package.json file contents\n        source: File path for tracking dependency origin\n    \n    Returns:\n        List of PackageInfo objects with name, version, ecosystem\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-008",
+      "severity": "medium",
+      "confidence": 0.85,
+      "title": "Slicer prioritization algorithm undocumented",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          24,
+          118
+        ],
+        "snippet": "SECURITY_PATTERNS = [\n    r\"eval\\s*\\(\",\n    r\"exec\\s*\\(\",\n    r\"__import__\",\n    r\"pickle\\.loads\","
+      },
+      "impact": "Complex scoring logic for file prioritization is opaque. No explanation of how patterns affect ranking.",
+      "recommendation": "Add module-level docstring explaining scoring algorithm and pattern weighting",
+      "patch_hint": "\"\"\"File prioritization for agent analysis.\n\nRanks files by relevance to each agent's focus area using pattern matching:\n- Security: eval, exec, subprocess, auth patterns\n- Resilience: try/except, error handling\n- Performance: queries, loops, network calls\n\nFiles with more pattern matches score higher and are included first.\n\"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-009",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Orchestrator agent registration mechanism undocumented",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          147
+        ],
+        "snippet": "reports: list[AgentReport] = await asyncio.gather(*[_run_agent(a) for a in agents])"
+      },
+      "impact": "No documentation on how to add new agents. Claim of 'copy/paste + registration' in README unsupported by code comments.",
+      "recommendation": "Add docstring or inline comments explaining agent registration and execution flow",
+      "patch_hint": "# Agent registration: instantiate agent classes in AGENTS list above\n# Each agent must implement BaseAgent.run() and return AgentReport\n# Agents run concurrently via asyncio.gather()",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-010",
+      "severity": "medium",
+      "confidence": 0.75,
+      "title": "HTML report generation missing inline examples",
+      "evidence": {
+        "file": "codeval/html_report.py",
+        "lines": [
+          1,
+          6
+        ],
+        "snippet": "\"\"\"Generate a self-contained HTML validation report.\n\nThe output is a single HTML file with all CSS/JS inlined -- no external\ndependencies.  Designed to look polished when opened in any browser, including\nprojector screens at hackathon demos.\n\"\"\""
+      },
+      "impact": "Module docstring describes output but lacks usage example. Unclear what parameters render_html accepts.",
+      "recommendation": "Add function-level docstring with parameter descriptions and usage example",
+      "patch_hint": "def render_html(report: FinalReport) -> str:\n    \"\"\"Render FinalReport to standalone HTML.\n    \n    Args:\n        report: Validated FinalReport with findings and scores\n    \n    Returns:\n        HTML string with inlined CSS/JS, ready to write to file\n    \n    Example:\n        html = render_html(report)\n        Path('output.html').write_text(html)\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-011",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Schema classes lack field descriptions",
+      "evidence": {
+        "file": "codeval/schemas.py",
+        "lines": [
+          1,
+          6
+        ],
+        "snippet": "\"\"\"Pydantic schemas for agent outputs and final report.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Literal"
+      },
+      "impact": "Core data structures lack docstrings. API consumers cannot understand field semantics without reading code.",
+      "recommendation": "Add class-level docstrings and Field descriptions for all Pydantic models",
+      "patch_hint": "class AgentFinding(BaseModel):\n    \"\"\"A single security, functional, or resilience finding.\n    \n    Attributes:\n        id: Unique identifier for finding\n        severity: critical|high|medium|low\n        confidence: 0.0-1.0 confidence score\n        evidence: File location and code snippet\n    \"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-012",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Test fixtures lack purpose documentation",
+      "evidence": {
+        "file": "tests/conftest.py",
+        "lines": [
+          21,
+          40
+        ],
+        "snippet": "@pytest.fixture\ndef sample_repo_with_patterns(tmp_path: Path) -> Path:\n    \"\"\"Repo with eval, except:, shell=True for slicer/heuristics tests.\"\"\""
+      },
+      "impact": "Fixture docstring is brief but adequate. Could mention which tests consume it for traceability.",
+      "recommendation": "Expand docstring to list consuming tests and exact patterns included",
+      "patch_hint": "\"\"\"Create temporary repo with security and resilience anti-patterns.\n\nIncludes: eval(), shell=True, bare except:, broad Exception catch\nUsed by: test_slicer_security_prioritizes, test_heuristics_detection\n\"\"\"",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-013",
+      "severity": "low",
+      "confidence": 0.75,
+      "title": "Magic numbers in slicer patterns lack explanation",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          24,
+          118
+        ],
+        "snippet": "SECURITY_PATTERNS = [\n    r\"eval\\s*\\(\",\n    r\"exec\\s*\\(\",\n    r\"__import__\","
+      },
+      "impact": "Pattern lists are comprehensive but lack comments on prioritization or why specific patterns chosen.",
+      "recommendation": "Add inline comments grouping patterns by category (code execution, deserialization, etc.)",
+      "patch_hint": "# Code execution vulnerabilities\nr\"eval\\s*\\(\",\nr\"exec\\s*\\(\",\n# Unsafe deserialization\nr\"pickle\\.loads\",\nr\"yaml\\.unsafe_load\",",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "doc-014",
+      "severity": "low",
+      "confidence": 0.7,
+      "title": "Environment variable loading fallback logic undocumented",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          241
+        ],
+        "snippet": "# Fallback: manual parse if dotenv didn't load (encoding/BOM issues)\n            if not os.environ.get(\"ANTHROPIC_API_KEY\", \"\").strip():\n                try:\n                    raw = env_path.read_text(encoding=\"utf-8-sig\").strip()"
+      },
+      "impact": "Complex fallback logic has inline comment but lacks explanation of BOM issues and why manual parsing needed.",
+      "recommendation": "Expand comment to explain Windows BOM encoding issues and when fallback triggers",
+      "patch_hint": "# Fallback for Windows .env files with UTF-8 BOM that break python-dotenv\n# Manually parse KEY=value lines, stripping quotes and placeholder values\n# Only triggered if ANTHROPIC_API_KEY wasn't loaded by load_dotenv()",
+      "test_hint": "",
+      "source": "documentation"
+    },
+    {
+      "id": "arch-circ-dep-cli-orchestrator",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Circular dependency risk between CLI and orchestrator modules",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          37
+        ],
+        "snippet": "from codeval.html_report import render_html\nfrom codeval.llm import is_llm_available, set_concurrency\nfrom codeval.orchestrator import run_validation\nfrom codeval.schemas import FinalReport"
+      },
+      "impact": "The CLI module imports orchestrator, llm, html_report, and schemas. If any of these modules attempt to import from cli (e.g., for configuration or utilities), a circular dependency will occur, causing import errors and making the codebase fragile.",
+      "recommendation": "Extract shared configuration and environment loading into a separate config.py module that has no dependencies on other project modules. CLI should be a thin presentation layer that only imports from lower layers.",
+      "patch_hint": "Create codeval/config.py containing _load_env() and configuration constants. Have cli.py, orchestrator.py, and llm.py import from config instead of duplicating logic.",
+      "test_hint": "Test that each module can be imported independently without triggering circular imports.",
+      "source": "architecture"
+    },
+    {
+      "id": "arch-god-module-cli",
+      "severity": "high",
+      "confidence": 0.92,
+      "title": "God module: CLI contains environment loading, rendering, and application logic",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          18,
+          40
+        ],
+        "snippet": "def _load_env():\n    \"\"\"Load .env from cwd or package root.\"\"\"\n    ...\n_load_env()\n\nfrom codeval.html_report import render_html\nfrom codeval.llm import is_llm_available, set_concurrency\nfrom codeval.orchestrator import run_validation\nfrom codeval.schemas import FinalReport\n\napp = typer.Typer(help=\"Multi-agent code validator\")\n\n\ndef _render_markdown(report: FinalReport) -> str:\n    \"\"\"Render FinalReport to Markdown.\"\"\""
+      },
+      "impact": "The CLI module mixes concerns: environment loading (infrastructure), report rendering (presentation), application bootstrapping, and orchestration coordination. This violates Single Responsibility Principle and makes the module difficult to test and maintain.",
+      "recommendation": "Separate concerns into distinct modules: config.py for environment loading, renderers.py for markdown/HTML rendering utilities, and keep cli.py focused solely on command-line interface definition and argument parsing.",
+      "patch_hint": "Move _load_env() to config.py, _render_markdown() to renderers.py or html_report.py. CLI should only handle typer decorators and call orchestrator.",
+      "test_hint": "Test rendering logic independently of CLI. Test CLI without executing full validation.",
+      "source": "architecture"
+    },
+    {
+      "id": "arch-high-coupling-slicer",
+      "severity": "high",
+      "confidence": 0.88,
+      "title": "High coupling: slicer module defines multiple pattern sets and slicing logic",
+      "evidence": {
+        "file": "codeval/slicer.py",
+        "lines": [
+          24,
+          118
+        ],
+        "snippet": "SECURITY_PATTERNS = [\n    r\"eval\\s*\\(\",\n    r\"exec\\s*\\(\",\n    ...\n]\nERROR_HANDLING_PATTERNS = [...]\nPERFORMANCE_PATTERNS = [...]\nCONCURRENCY_PATTERNS = [...]\nAPI_ROUTE_PATTERNS = [...]\nARCHITECTURE_PATTERNS = [...]"
+      },
+      "impact": "The slicer module contains domain-specific pattern knowledge for 6 different agent types (security, resilience, performance, concurrency, api_contract, architecture). This creates tight coupling between the slicing mechanism and agent-specific concerns, violating Single Responsibility.",
+      "recommendation": "Extract pattern definitions to each respective agent module or a shared patterns.py. Slicer should accept patterns as parameters, not hardcode them. Each agent should define its own patterns.",
+      "patch_hint": "Create agents/patterns.py or have each agent expose a get_patterns() method. Slicer becomes a generic file selection utility that accepts pattern lists.",
+      "test_hint": "Test slicer with custom patterns. Verify adding new agent types doesn't require modifying slicer.",
+      "source": "architecture"
+    },
+    {
+      "id": "arch-missing-di-orchestrator",
+      "severity": "medium",
+      "confidence": 0.85,
+      "title": "Missing dependency injection: orchestrator hardcodes agent instantiation",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          131,
+          147
+        ],
+        "snippet": "async def _run_agent(a):\n    ...\n    try:\n        report = await agent.run(fingerprint, files, heuristics, llm_enabled)\n        ...\n    except Exception as exc:\n        logger.warning(\"Agent %s crashed: %s\", agent.name, exc)\n        ...\n\nreports: list[AgentReport] = await asyncio.gather(*[_run_agent(a) for a in agents])"
+      },
+      "impact": "The orchestrator directly instantiates and manages agent execution. This makes it difficult to mock agents for testing, swap implementations, or configure agent behavior externally. Testing orchestrator logic requires running actual agents.",
+      "recommendation": "Introduce an AgentRegistry or factory pattern. Pass agent instances to orchestrator rather than having it construct them. Use dependency injection to allow test doubles.",
+      "patch_hint": "Create AgentFactory that returns agent instances. Orchestrator accepts List[BaseAgent] as parameter. Tests can inject mock agents.",
+      "test_hint": "Test orchestrator with mock agents that return predetermined reports without executing real analysis.",
+      "source": "architecture"
+    },
+    {
+      "id": "arch-layer-violation-llm-semaphore",
+      "severity": "high",
+      "confidence": 0.8,
+      "title": "Global state for concurrency control violates dependency inversion",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          12,
+          32
+        ],
+        "snippet": "_LLM_SEMAPHORE: asyncio.Semaphore | None = None\n_LLM_CONCURRENCY: int = 3\n\ndef set_concurrency(n: int) -> None:\n    \"\"\"Override the default LLM concurrency limit (default: 3).\"\"\"\n    global _LLM_SEMAPHORE, _LLM_CONCURRENCY\n    _LLM_CONCURRENCY = max(1, n)\n    _LLM_SEMAPHORE = None"
+      },
+      "impact": "Global mutable state for concurrency control makes the system difficult to test, impossible to run multiple validation sessions with different concurrency settings in parallel, and creates hidden dependencies. Any module can call set_concurrency() affecting all others.",
+      "recommendation": "Encapsulate LLM client and concurrency settings in a configurable LLMClient class. Pass client instances through dependency injection rather than using global state.",
+      "patch_hint": "Create LLMClient class with __init__(concurrency: int). Store semaphore as instance attribute. Orchestrator creates and passes LLMClient to agents.",
+      "test_hint": "Test multiple LLMClient instances with different concurrency settings operating independently.",
+      "source": "architecture"
+    },
+    {
+      "id": "arch-mixed-concerns-heuristics",
+      "severity": "medium",
+      "confidence": 0.78,
+      "title": "Heuristics module mixes pattern definitions with file I/O and analysis logic",
+      "evidence": {
+        "file": "codeval/heuristics.py",
+        "lines": [
+          20,
+          65
+        ],
+        "snippet": "PATTERNS = [\n    (\"TODO_FIXME\", r\"#\\s*(TODO|FIXME)\", \"functional\"),\n    ...\n]\n\nSQL_CONCAT_SIMPLE = re.compile(...)\nMISSING_TIMEOUT_PATTERN = re.compile(...)\n\ndef _read_safe(path: Path, max_size: int = MAX_FILE_SIZE) -> str | None:\n    \"\"\"Read file safely.\"\"\""
+      },
+      "impact": "The heuristics module contains pattern definitions, compiled regex objects, file reading utilities, and analysis logic. This violates Single Responsibility and makes the module harder to test and maintain independently.",
+      "recommendation": "Separate pattern definitions, file I/O utilities, and analysis engine. Patterns could be in a configuration file or patterns.py, file utilities in a shared utils module, and heuristics focus on pattern matching logic.",
+      "patch_hint": "Create patterns.py for pattern definitions, utils/file_io.py for _read_safe(), keep heuristics.py focused on pattern matching and finding generation.",
+      "test_hint": "Test pattern matching with in-memory strings. Test file I/O independently. Verify patterns can be loaded from external config.",
+      "source": "architecture"
+    },
+    {
+      "id": "arch-cohesion-fingerprint-osv",
+      "severity": "low",
+      "confidence": 0.72,
+      "title": "Low cohesion: fingerprint and OSV modules duplicate file reading logic",
+      "evidence": {
+        "file": "codeval/fingerprint.py",
+        "lines": [
+          86,
+          108
+        ],
+        "snippet": "def _read_safe(path: Path, max_size: int = MAX_FILE_SIZE_FINGERPRINT) -> str | None:\n    \"\"\"Read file safely, return None on decode error.\"\"\"\n    try:\n        size = path.stat().st_size\n        if size > max_size:\n            return None\n        with open(path, \"r\", encoding=\"utf-8\", errors=\"strict\") as f:\n            return f.read()"
+      },
+      "impact": "Multiple modules (fingerprint, heuristics, OSV) implement their own file reading utilities with slightly different parameters and error handling. This code duplication makes maintenance harder and creates inconsistency risks.",
+      "recommendation": "Create a shared utils/file_io.py module with reusable file reading functions that accept configurable parameters (max_size, encoding, error handling). All modules import from this shared utility.",
+      "patch_hint": "Create codeval/utils/file_io.py with read_text_safe(path, max_size, encoding, errors). Replace _read_safe() implementations across modules.",
+      "test_hint": "Test file reading utility with various file sizes, encodings, and error conditions once in utils test.",
+      "source": "architecture"
+    },
+    {
+      "id": "concurrency-critical-001",
+      "severity": "critical",
+      "confidence": 0.95,
+      "title": "Global mutable semaphore without thread-safe initialization",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          13,
+          19
+        ],
+        "snippet": "_LLM_SEMAPHORE: asyncio.Semaphore | None = None\n_LLM_CONCURRENCY: int = 3"
+      },
+      "impact": "Multiple asyncio tasks calling set_concurrency() or _get_semaphore() concurrently can trigger race conditions. The pattern `if _LLM_SEMAPHORE is None: _LLM_SEMAPHORE = asyncio.Semaphore(...)` in _get_semaphore() is not atomic. Two tasks checking the None condition simultaneously could both create a new Semaphore, leading to inconsistent concurrency limiting and broken synchronization.",
+      "recommendation": "Use asyncio.Lock to protect the semaphore initialization. Alternatively, initialize the semaphore once at module load or use a thread-safe singleton pattern with double-checked locking and a lock.",
+      "patch_hint": "Add `_SEMAPHORE_LOCK = asyncio.Lock()` at module level. In _get_semaphore(), wrap the check-and-create in `async with _SEMAPHORE_LOCK:` to ensure only one task initializes the semaphore.",
+      "test_hint": "Write a test that spawns multiple concurrent tasks calling set_concurrency() followed by _get_semaphore() and verify only one Semaphore instance is created.",
+      "source": "concurrency"
+    },
+    {
+      "id": "concurrency-critical-002",
+      "severity": "critical",
+      "confidence": 0.9,
+      "title": "Race condition in set_concurrency with global state reset",
+      "evidence": {
+        "file": "codeval/llm.py",
+        "lines": [
+          26,
+          29
+        ],
+        "snippet": "def set_concurrency(n: int) -> None:\n    global _LLM_SEMAPHORE, _LLM_CONCURRENCY\n    _LLM_CONCURRENCY = max(1, n)\n    _LLM_SEMAPHORE = None"
+      },
+      "impact": "Setting _LLM_SEMAPHORE to None while other tasks may be acquiring it in _get_semaphore() creates a race condition. If one task is in the middle of checking `if _LLM_SEMAPHORE is None:` while another calls set_concurrency(), the semaphore can be reset mid-flight, causing tasks to bypass concurrency limits or deadlock.",
+      "recommendation": "Protect set_concurrency() and _get_semaphore() with the same asyncio.Lock. Ensure semaphore updates are atomic and no task can observe partial state.",
+      "patch_hint": "Use `async with _SEMAPHORE_LOCK:` in both set_concurrency() (make it async) and _get_semaphore(). Alternatively, disallow runtime changes to concurrency or recreate the semaphore atomically.",
+      "test_hint": "Test concurrent calls to set_concurrency() and _get_semaphore() from multiple tasks and verify no semaphore is lost or duplicated.",
+      "source": "concurrency"
+    },
+    {
+      "id": "concurrency-high-001",
+      "severity": "high",
+      "confidence": 0.85,
+      "title": "Potential blocking I/O in async context with Path.read_text",
+      "evidence": {
+        "file": "codeval/cli.py",
+        "lines": [
+          25
+        ],
+        "snippet": "raw = env_path.read_text(encoding=\"utf-8-sig\").strip()"
+      },
+      "impact": "Path.read_text() is synchronous blocking I/O. If called inside an async function (e.g. wrapped in an async CLI handler), it blocks the event loop, degrading concurrency and responsiveness. This pattern appears in a synchronous _load_env() context here, but if this code is invoked from an async entry point, it will block.",
+      "recommendation": "If the CLI runs in an async context (e.g. typer with async commands), use aiofiles or asyncio.to_thread() to offload file reads. If CLI is purely synchronous, this is acceptable but document that async code should not call _load_env().",
+      "patch_hint": "Wrap with `await asyncio.to_thread(env_path.read_text, encoding='utf-8-sig')` if inside async. Alternatively, use aiofiles library: `async with aiofiles.open(env_path) as f: raw = await f.read()`",
+      "test_hint": "Run CLI with async commands and monitor event loop blocking with asyncio debug mode or profiling.",
+      "source": "concurrency"
+    },
+    {
+      "id": "concurrency-medium-001",
+      "severity": "medium",
+      "confidence": 0.8,
+      "title": "Fire-and-forget concurrent agent execution with asyncio.gather",
+      "evidence": {
+        "file": "codeval/orchestrator.py",
+        "lines": [
+          147
+        ],
+        "snippet": "reports: list[AgentReport] = await asyncio.gather(*[_run_agent(a) for a in agents])"
+      },
+      "impact": "asyncio.gather() without return_exceptions=True will propagate the first exception and cancel remaining tasks. If one agent crashes, others may not complete. The code has a try/except in _run_agent() which mitigates this, but if an exception escapes (e.g. from asyncio.gather itself), remaining agents are silently cancelled.",
+      "recommendation": "Add `return_exceptions=True` to asyncio.gather() to ensure all agents complete even if some fail. Then handle exceptions in the results list.",
+      "patch_hint": "Change to `await asyncio.gather(*[_run_agent(a) for a in agents], return_exceptions=True)` and filter/log exceptions in results.",
+      "test_hint": "Simulate an agent that raises an exception outside try/except and verify all other agents still execute.",
+      "source": "concurrency"
+    }
+  ],
+  "recommended_next_steps": [
+    "Address 10 critical issue(s) first: No discoverable entrypoints found in codebase, Missing timeout parameter validation in heuristics, God function in cli.py _render_markdown exceeds 200 lines",
+    "Review 12 high-severity issue(s)",
+    "Improve documentation coverage"
+  ],
+  "fingerprint": {
+    "languages": {
+      "python": 31
+    },
+    "frameworks": [
+      "pyproject"
+    ],
+    "has_tests": true,
+    "entrypoints": [],
+    "dependency_files": [
+      "pyproject.toml"
+    ],
+    "test_patterns": [
+      "tests/conftest.py",
+      "tests/test_failure_tracking.py",
+      "tests/test_fingerprint.py",
+      "tests/test_heuristics.py",
+      "tests/test_html.py",
+      "tests/test_llm.py",
+      "tests/test_orchestrator.py",
+      "tests/test_slicer.py"
+    ]
+  },
+  "failed_categories": []
+}

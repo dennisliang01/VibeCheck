@@ -1,0 +1,33 @@
+# Example config for codeval (optional)
+# CLI flags override these values
+
+# Include/exclude glob patterns
+include:
+  - "*.py"
+  - "*.js"
+  - "*.ts"
+exclude:
+  - "venv/*"
+  - "node_modules/*"
+  - ".git/*"
+  - "__pycache__/*"
+
+# Severity weights (subtract from 100)
+severity_weights:
+  critical: 30
+  high: 20
+  medium: 10
+  low: 3
+
+# Category weights for overall score
+category_weights:
+  functional: 0.4
+  security: 0.35
+  resilience: 0.25
+
+# LLM (Claude preferred if ANTHROPIC_API_KEY set, else OpenAI)
+llm:
+  # Claude: claude-sonnet-4-20250514, claude-3-5-sonnet-20241022
+  # OpenAI: gpt-4o-mini, gpt-4o
+  model: "claude-sonnet-4-20250514"
+  enabled: true
